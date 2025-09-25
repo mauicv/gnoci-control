@@ -11,6 +11,15 @@ FetchContent_Declare(MiniPID
   GIT_TAG        6ff76acc9562e75649c4532225183686ace901b3
 )
 
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 FetchContent_MakeAvailable(MiniPID)
 add_library(minipid STATIC
   ${minipid_SOURCE_DIR}/MiniPID.cpp
@@ -43,3 +52,20 @@ target_link_libraries(gnoci PRIVATE Threads::Threads)
 target_link_libraries(gnoci PRIVATE minipid)
 
 target_link_libraries(gnoci PRIVATE scheduled_executor)
+
+
+enable_testing()
+
+add_executable(
+  all_tests
+  tests/all_tests.cc
+  tests/test_servo.cc
+  tests/test_servo_group.cc
+)
+target_link_libraries(
+  all_tests
+  GTest::gtest_main
+  minipid
+)
+include(GoogleTest)
+gtest_discover_tests(all_tests)

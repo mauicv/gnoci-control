@@ -40,7 +40,7 @@ int main() {
 
     for (int i = 0; i < 100; i++) {
         servos.update_values();
-        servos.servos[0].update_setpoint(0.4);
+        servos.update_setpoints({0.4, 0.4});
         std::cout << "pwm1: " << servos.servos[0].get_pwm() << " pwm2: " << servos.servos[1].get_pwm() << std::endl;
     }
 

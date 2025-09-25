@@ -8,6 +8,7 @@
 #define SERVO_PWM_THRESHOLD_MAX 2500
 #define HALF_RANGE (SERVO_PWM_THRESHOLD_MAX - SERVO_PWM_THRESHOLD_MIN) / 2
 
+
 class Servo {
 public:
     std::string name;
@@ -48,17 +49,24 @@ public:
         value = std::max(lower_limit, std::min(value, upper_limit));
     };
 
-    double get_pwm() {
-        double pwm_val = (value + 1) * HALF_RANGE + SERVO_PWM_THRESHOLD_MIN;
-        pwm_val = std::max<double>(SERVO_PWM_THRESHOLD_MIN, std::min<double>(pwm_val, SERVO_PWM_THRESHOLD_MAX));
-        return pwm_val;
-    }
-
     void update_setpoint(double setpoint) {
         this->setpoint = setpoint;
         pid.setSetpoint(setpoint);
     }
+
+    double get_pwm() {
+        double pwm_val = (value + 1) * HALF_RANGE + SERVO_PWM_THRESHOLD_MIN;
+        pwm_val = std::max<double>(
+            SERVO_PWM_THRESHOLD_MIN,
+            std::min<double>(
+                pwm_val,
+                SERVO_PWM_THRESHOLD_MAX
+            )
+        );
+        return pwm_val;
+    }
 };
+
 
 class ServoGroup {
 public:
@@ -66,11 +74,18 @@ public:
     ServoGroup(
         std::vector<Servo>& servos
     ): servos(servos) {}
+
     void update_values() {
         for (auto& servo : servos) {
             servo.update_value();
         }
     };
+
+    void update_setpoints(std::vector<double> setpoints) {
+        for (int i = 0; i < servos.size(); i++) {
+            servos[i].update_setpoint(setpoints[i]);
+        }
+    }
 };
 
 #endif // SERVO_H
