@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <MiniPID.h>
+#include <pigpiod_if2.h>
 
 #define SERVO_PWM_THRESHOLD_MIN 500
 #define SERVO_PWM_THRESHOLD_MAX 2500
@@ -11,6 +12,7 @@
 
 class Servo {
 public:
+    int gpio;
     std::string name;
     int pin;
     MiniPID pid;
@@ -21,6 +23,7 @@ public:
     double offset;
 
     Servo(
+        int gpio,
         std::string name,
         int pin,
         double p,
@@ -34,6 +37,7 @@ public:
         pid(p, i, d),
         name(name),
         pin(pin),
+        gpio(gpio),
         setpoint(setpoint),
         upper_limit(upper_limit),
         lower_limit(lower_limit),
@@ -42,11 +46,13 @@ public:
         pid.setOutputLimits(-1, 1);
         pid.setSetpoint(setpoint);
         value = setpoint;
+        set_mode(gpio, pin, PI_OUTPUT);
     }
 
-    void update_value() {
-        value += pid.getOutput(value, setpoint);
+    void update_value(double dt) {
+        value += pid.getOutput(value, setpoint) * dt;
         value = std::max(lower_limit, std::min(value, upper_limit));
+        set_servo_pulsewidth(gpio, pin, get_pwm());
     };
 
     void update_setpoint(double setpoint) {
@@ -75,9 +81,9 @@ public:
         std::vector<Servo>& servos
     ): servos(servos) {}
 
-    void update_values() {
+    void update_values(double dt) {
         for (auto& servo : servos) {
-            servo.update_value();
+            servo.update_value(dt);
         }
     };
 

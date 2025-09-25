@@ -66,6 +66,7 @@ target_link_libraries(
   all_tests
   GTest::gtest_main
   minipid
+  pigpiod_if2
 )
 include(GoogleTest)
 gtest_discover_tests(all_tests)
