@@ -1,0 +1,6 @@
+{
+    "name": "gnoci",
+    "version-string": "0.1.0",
+    "dependencies": ["fmt"]
+  }
+  
