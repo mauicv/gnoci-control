@@ -55,6 +55,10 @@ bool read_block(int f_dev, uint8_t reg, uint8_t* data, uint8_t length) {
     return true;
 }
 
+constexpr float ACC_LSB_PER_G = 16384.0f; // for ±2 g
+constexpr float GYRO_LSB_PER_DPS = 131.0f; // for ±250 dps
+constexpr float TEMP_LSB_PER_C = 340.0f; // for 340 C
+
 class MPU6050 {
 public:
     int f_dev;
@@ -97,15 +101,20 @@ public:
         uint8_t sensor_data[14];
         read_block(f_dev, 0x3B, sensor_data, 14);
 
-        data[0] = (float)((sensor_data[0] << 8) | sensor_data[1])/16384;
-        data[1] = (float)((sensor_data[2] << 8) | sensor_data[3])/16384;
-        data[2] = (float)((sensor_data[4] << 8) | sensor_data[5])/16384;
-
-        float temp = (float)((sensor_data[6] << 8) | sensor_data[7])/340 + 36.53;
-        
-        data[3] = (float)((sensor_data[8] << 8) | sensor_data[9])/131;
-        data[4] = (float)((sensor_data[10] << 8) | sensor_data[11])/131;
-        data[5] = (float)((sensor_data[12] << 8) | sensor_data[13])/131;
+        // // static_cast<int16_t>((static_cast<int16_t>(data[4]) << 8) | data[5]);
+        int16_t x_acc = static_cast<int16_t>((static_cast<int16_t>(sensor_data[0]) << 8) | sensor_data[1]);
+        int16_t y_acc = static_cast<int16_t>((static_cast<int16_t>(sensor_data[2]) << 8) | sensor_data[3]);
+        int16_t z_acc = static_cast<int16_t>((static_cast<int16_t>(sensor_data[4]) << 8) | sensor_data[5]);
+        int16_t temp = static_cast<int16_t>((static_cast<int16_t>(sensor_data[6]) << 8) | sensor_data[7]);
+        int16_t x_gyro = static_cast<int16_t>((static_cast<int16_t>(sensor_data[8]) << 8) | sensor_data[9]);
+        int16_t y_gyro = static_cast<int16_t>((static_cast<int16_t>(sensor_data[10]) << 8) | sensor_data[11]);
+        int16_t z_gyro = static_cast<int16_t>((static_cast<int16_t>(sensor_data[12]) << 8) | sensor_data[13]);
+        data[0] = (float)x_acc/ACC_LSB_PER_G;
+        data[1] = (float)y_acc/ACC_LSB_PER_G;
+        data[2] = (float)z_acc/ACC_LSB_PER_G;
+        data[3] = (float)x_gyro/GYRO_LSB_PER_DPS;
+        data[4] = (float)y_gyro/GYRO_LSB_PER_DPS;
+        data[5] = (float)z_gyro/GYRO_LSB_PER_DPS;
     }
 
     float* get_data() {
