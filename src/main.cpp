@@ -7,73 +7,121 @@
 #include "MPU6050.h"
 #include "channel.h"
 #include <cstring>
+#include "ASD1115.h"
+#include <functional>
+using namespace std::placeholders;
 
 
-MPU6050 mpu6050;
+bool get_asd1115_data(ASD1115& asd1115, double dt) {
+    asd1115.get_sensor_data(dt);
+    return true;
+};
 
-
-bool get_mpu6050_data(double dt) {
+bool get_mpu6050_data(MPU6050& mpu6050, double dt) {
     mpu6050.get_sensor_data(dt);
     return true;
 }
 
-ScheduledExecutor mpu6050_executor(
-    get_mpu6050_data,
-    0.001
-);
+bool set_servo_values(ServoGroup& servos, double dt) {
+    servos.update_values(dt);
+    return true;
+}
 
-Response handle_message(Message message) {
-    float* data = mpu6050.get_data();
-    std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]);
+
+Response handle_message(
+        ASD1115& asd1115,
+        // MPU6050& mpu6050,
+        ServoGroup& servos,
+        Message message,
+        int count
+    ) {
+
+    
+    // test code
+    if ((count / 20) % 2) {
+        servos.update_setpoints({0.4});
+    } else {
+        servos.update_setpoints({-0.4});
+    }
+    // end test code
+
+    float* data = asd1115.get_data();
+    // std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]);
+    std::string response = std::to_string(data[3]);
     char content[response.length()];
     strcpy(content, response.c_str());
-    std::cout << "response: " << content << std::endl;
+    // std::cout << "response: " << content << std::endl;
     return Response{content, (int)response.length(), true};
 }
 
-// int pi = pigpio_start(nullptr, nullptr);
-// if (pi < 0) {
-//     std::cerr << "Failed to connect to pigpiod\n";
-//     return 1;
-// }
 
-// std::vector<Servo> servo_list;
-// servo_list.emplace_back(pi, "servo1", 17, 0.08, 0.01, 0.005, 0, 0.2, -1, 0);
-// servo_list.emplace_back(pi, "servo2", 27, 0.08, 0.01, 0.005, 0, 0.7, -1, 0);
-// ServoGroup servos(servo_list);
-
-// ScheduledExecutor executor(
-//     [&](double dt) {
-//         servos.update_values(dt);
-//         return true;
-//     },
-//     0.001
-// );
-
-
+// --------------------- MAIN CODE --------------------- //
 int main() {
-    // executor.start();
-    // servos.update_setpoints({0, 0});
+    // --------------------- ASD1115 CODE --------------------- //
+    ASD1115 asd1115;
 
-    // for (int i = 0; i < 3; i++) {
-    //     servos.update_setpoints({0, 0});
-    //     std::this_thread::sleep_for(std::chrono::seconds(2)); 
-    //     servos.update_setpoints({-0.4, -0.2});
-    //     std::this_thread::sleep_for(std::chrono::seconds(2)); 
-    // }
-    // std::this_thread::sleep_for(std::chrono::seconds(2)); 
+    ScheduledExecutor asd1115_executor(
+        std::bind(get_asd1115_data, std::ref(asd1115), _1),
+        0.001
+    );
 
-
-    mpu6050_executor.start();
+    // --------------------- MPU6050 CODE --------------------- //
+    // MPU6050 mpu6050;
     
-    Channel channel(8000, handle_message);
+    // ScheduledExecutor mpu6050_executor(
+    //     std::bind(get_mpu6050_data, std::ref(mpu6050), _1),
+    //     0.001
+    // );
+        
+    // --------------------- SERVO CODE --------------------- //
+    
+    int pi = pigpio_start(nullptr, nullptr);
+    if (pi < 0) {
+        std::cerr << "Failed to connect to pigpiod\n";
+        return 1;
+    };
+    
+    std::vector<Servo> servo_list;
+    servo_list.emplace_back(pi, "servo1", 17, 0.08, 0.01, 0.005, 0, 0.4, -0.4, 0);
+    // servo_list.emplace_back(pi, "servo2", 27, 0.08, 0.01, 0.005, 0, 0.7, -1, 0);
+    ServoGroup servos(servo_list);
+    
+    ScheduledExecutor servo_executor(
+        std::bind(set_servo_values, std::ref(servos), _1),
+        0.0001
+    );
+
+    // --------------------------------------------------------- //
+
+    servo_executor.start();
+    asd1115_executor.start();
+    // mpu6050_executor.start();
+
+    servos.update_setpoints({0.0});
+
+    Channel channel(
+        8000,
+        std::bind(handle_message, std::ref(asd1115), std::ref(servos), _1, _2)
+    );
     channel.start();
     
-    mpu6050_executor.stop();
+    // int i = 0;
+    // while (true) {
+    //     i++;
+    //     if ((i / 20) % 2) {
+    //         servos.update_setpoints({0.4});
+    //     } else {
+    //         servos.update_setpoints({-0.4});
+    //     }
+    //     float* data = asd1115.get_data();
+    //     std::cout << "Rotary position: " << data[3] << std::endl;
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // }
     
-    // pigpio_stop(pi); // disconnect from daemon
-    // executor.stop();
-    
+    pigpio_stop(pi); // disconnect from daemon
+    // mpu6050_executor.stop();
+    asd1115_executor.stop();
+    servo_executor.stop();
     return 0;
 }
 

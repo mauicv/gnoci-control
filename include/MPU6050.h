@@ -8,6 +8,7 @@
 
 #include <cstdint>
 
+#include "i2c_util.h"
 #include <string>
 using std::string;
 
@@ -17,43 +18,6 @@ extern "C" {
 	#include <i2c/smbus.h>
 }
 
-std::string toBinaryString(uint8_t byte) {
-    std::string bits;
-    bits.reserve(8);
-
-    for (int i = 7; i >= 0; --i) {
-        bits.push_back((byte & (1 << i)) ? '1' : '0');
-    }
-    return bits;
-}
-
-uint8_t read(int f_dev, uint8_t reg) {
-    int32_t ret = i2c_smbus_read_byte_data(f_dev, reg);
-    if (ret < 0) {
-        std::cout << "Error reading from MPU6050\n";
-        return 0;
-    }
-    uint8_t byte = static_cast<uint8_t>(ret);
-    return byte;
-}
-
-uint8_t write(int f_dev, uint8_t reg, uint8_t val) {
-    int32_t ret = i2c_smbus_write_byte_data(f_dev, reg, val);
-    if (ret < 0) {
-        std::cout << "Error writing to MPU6050\n";
-        return 0;
-    }
-    return 1;
-}
-
-bool read_block(int f_dev, uint8_t reg, uint8_t* data, uint8_t length) {
-    int32_t ret = i2c_smbus_read_i2c_block_data(f_dev, reg, length, data);
-    if (ret < 0) {
-        std::cout << "Error reading from MPU6050\n";
-        return false;
-    }
-    return true;
-}
 
 constexpr float ACC_LSB_PER_G = 16384.0f; // for ±2 g
 constexpr float GYRO_LSB_PER_DPS = 131.0f; // for ±250 dps
@@ -92,7 +56,8 @@ public:
         std::cout << (ret & (1 << 4)) << (ret & (1 << 3)) << std::endl;
 
         std::cout << "Config Output: ";
-        ret = write(f_dev, 0x1A, 0b00000011);
+        // ret = write(f_dev, 0x1A, 0b00000011); // 44hz cuttof 4.9ms delay
+        ret = write(f_dev, 0x1A, 0b00000000); // 260hz cuttof 0.0ms delay
         ret = read(f_dev, 0x1A);
         std::cout << toBinaryString(ret) << std::endl;
     }
@@ -101,7 +66,6 @@ public:
         uint8_t sensor_data[14];
         read_block(f_dev, 0x3B, sensor_data, 14);
 
-        // // static_cast<int16_t>((static_cast<int16_t>(data[4]) << 8) | data[5]);
         int16_t x_acc = static_cast<int16_t>((static_cast<int16_t>(sensor_data[0]) << 8) | sensor_data[1]);
         int16_t y_acc = static_cast<int16_t>((static_cast<int16_t>(sensor_data[2]) << 8) | sensor_data[3]);
         int16_t z_acc = static_cast<int16_t>((static_cast<int16_t>(sensor_data[4]) << 8) | sensor_data[5]);

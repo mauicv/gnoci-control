@@ -18,7 +18,7 @@ struct Response {
     bool success;
 };
 
-using servable_function = std::function<Response(Message)>;
+using servable_function = std::function<Response(Message, int)>;
 
 class Channel {
     public:
@@ -30,6 +30,7 @@ class Channel {
         char buf[1024];
         int n;
         servable_function func;
+        int count = 0;
 
         Channel(int port, servable_function func): port(port), func(func) {
             sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -50,7 +51,8 @@ class Channel {
                 if (n < 0) error("recvfrom");
 
                 Message message = {buf, n};
-                Response response = func(message);
+                count++;
+                Response response = func(message, count);
                 if (response.success) {
                     n = sendto(sockfd, response.data, response.length, 0, (struct sockaddr *)&from, fromlen);
                     if (n  < 0) error("sendto");
