@@ -16,6 +16,8 @@ extern "C" {
 	#include <i2c/smbus.h>
 }
 
+static inline uint16_t bswap16(uint16_t w) { return uint16_t((w << 8) | (w >> 8)); }
+
 std::string toBinaryString(uint8_t byte) {
     std::string bits;
     bits.reserve(8);
@@ -26,7 +28,27 @@ std::string toBinaryString(uint8_t byte) {
     return bits;
 }
 
-uint8_t read(int f_dev, uint8_t reg) {
+std::string wordToBinaryString(uint16_t byte) {
+    std::string bits;
+    bits.reserve(16);
+
+    for (int i = 15; i >= 0; --i) {
+        bits.push_back((byte & (1 << i)) ? '1' : '0');
+    }
+    return bits;
+}
+
+std::string bit32ToBinaryString(uint32_t byte) {
+    std::string bits;
+    bits.reserve(32);
+
+    for (int i = 31; i >= 0; --i) {
+        bits.push_back((byte & (1 << i)) ? '1' : '0');
+    }
+    return bits;
+}
+
+uint8_t read_byte(int f_dev, uint8_t reg) {
     int32_t ret = i2c_smbus_read_byte_data(f_dev, reg);
     if (ret < 0) {
         std::cout << "Error reading from ASD1115\n";
@@ -36,7 +58,7 @@ uint8_t read(int f_dev, uint8_t reg) {
     return byte;
 }
 
-uint8_t write(int f_dev, uint8_t reg, uint8_t val) {
+uint8_t write_byte(int f_dev, uint8_t reg, uint8_t val) {
     int32_t ret = i2c_smbus_write_byte_data(f_dev, reg, val);
     if (ret < 0) {
         std::cout << "Error writing to ASD1115\n";
@@ -52,6 +74,26 @@ bool read_block(int f_dev, uint8_t reg, uint8_t* data, uint8_t length) {
         return false;
     }
     return true;
+}
+
+uint16_t read_word(int f_dev, uint8_t reg) {
+    int32_t ret = i2c_smbus_read_word_data(f_dev, reg);
+    if (ret < 0) {
+        std::cout << "Error reading from TCA9548A\n";
+        return 0;
+    }
+    uint16_t word = static_cast<uint16_t>(ret);
+    return word;
+}
+
+
+bool write_word(int f_dev, uint8_t reg, uint16_t val) {
+    int32_t ret = i2c_smbus_write_word_data(f_dev, reg, val);
+    if (ret < 0) {
+        std::cout << "Error writing to TCA9548A\n";
+        return 0;
+    }
+    return 1;
 }
 
 #endif // I2C_UTIL_H

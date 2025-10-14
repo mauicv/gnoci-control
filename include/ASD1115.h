@@ -14,41 +14,9 @@
 #include <string>
 using std::string;
 
-static inline uint16_t bswap16(uint16_t w) { return uint16_t((w << 8) | (w >> 8)); }
-
 extern "C" {
 	#include <linux/i2c-dev.h>
 	#include <i2c/smbus.h>
-}
-
-uint16_t read_word(int f_dev, uint8_t reg) {
-    int32_t ret = i2c_smbus_read_word_data(f_dev, reg);
-    if (ret < 0) {
-        std::cout << "Error reading from ASD1115\n";
-        return 0;
-    }
-    uint16_t word = static_cast<uint16_t>(ret);
-    return word;
-}
-
-
-bool write_word(int f_dev, uint8_t reg, uint16_t val) {
-    int32_t ret = i2c_smbus_write_word_data(f_dev, reg, val);
-    if (ret < 0) {
-        std::cout << "Error writing to ASD1115\n";
-        return 0;
-    }
-    return 1;
-}
-
-std::string wordToBinaryString(uint16_t byte) {
-    std::string bits;
-    bits.reserve(16);
-
-    for (int i = 15; i >= 0; --i) {
-        bits.push_back((byte & (1 << i)) ? '1' : '0');
-    }
-    return bits;
 }
 
 const std::map<int, unsigned int> pin_config_map = {

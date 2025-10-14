@@ -39,26 +39,26 @@ public:
             std::cout << "Failed to set I2C slave address\n";
         }
 
-        uint8_t ret = read(f_dev, 0x75);
+        uint8_t ret = read_byte(f_dev, 0x75);
         std::cout << toBinaryString(ret) << std::endl;
 
-        write(f_dev, 0x6B, 0x00);
+        write_byte(f_dev, 0x6B, 0x00);
         std::cout << "Verify write to 0x6B(Non-sleep mode): ";
-        ret = read(f_dev, 0x6B);
+        ret = read_byte(f_dev, 0x6B);
         std::cout << (ret & (1 << 2)) << std::endl;
 
         std::cout << "Verify 2g scale: ";
-        ret = read(f_dev, 0x1C);
+        ret = read_byte(f_dev, 0x1C);
         std::cout << (ret & (1 << 4)) << (ret & (1 << 3)) << std::endl;
 
         std::cout << "Verify 250dps scale: ";
-        ret = read(f_dev, 0x1B);
+        ret = read_byte(f_dev, 0x1B);
         std::cout << (ret & (1 << 4)) << (ret & (1 << 3)) << std::endl;
 
         std::cout << "Config Output: ";
         // ret = write(f_dev, 0x1A, 0b00000011); // 44hz cuttof 4.9ms delay
-        ret = write(f_dev, 0x1A, 0b00000000); // 260hz cuttof 0.0ms delay
-        ret = read(f_dev, 0x1A);
+        ret = write_byte(f_dev, 0x1A, 0b00000000); // 260hz cuttof 0.0ms delay
+        ret = read_byte(f_dev, 0x1A);
         std::cout << toBinaryString(ret) << std::endl;
     }
 
