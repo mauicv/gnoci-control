@@ -14,6 +14,7 @@
 #include <string>
 using std::string;
 
+static inline uint16_t bswap16(uint16_t w) { return uint16_t((w << 8) | (w >> 8)); }
 
 extern "C" {
 	#include <linux/i2c-dev.h>
@@ -69,16 +70,16 @@ const std::map<int, unsigned int> SR_config_map = {
 };
 
 const std::map<int, unsigned int> config_map = {
-    {0, 0b1110001111000101},
-    {1, 0b1110001111010101},
-    {2, 0b1110001111100101},
-    {3, 0b1110001111110101}
+    {0, 0b1110001111000011},
+    {1, 0b1110001111010011},
+    {2, 0b1110001111100011},
+    {3, 0b1110001111110011}
 };
 
 class ASD1115 {
 public:
     int f_dev;
-    float data[4];
+    double data[4];
  
     ASD1115() {
         f_dev = open("/dev/i2c-1", O_RDWR);
@@ -97,11 +98,14 @@ public:
         while ((read_word(f_dev, 0x01) & 0b0000000010000000) == 0) {
             std::this_thread::sleep_for(std::chrono::milliseconds(2)); 
         }
-        uint16_t value = read_word(f_dev, 0x00);
-        int16_t new_value = static_cast<int16_t>((value >> 8) | (value << 8));
+        uint16_t raw = read_word(f_dev, 0x00);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2)); 
+        raw = read_word(f_dev, 0x00);
+        raw = static_cast<uint16_t>((raw << 8) | (raw >> 8));
+        int16_t value = static_cast<int16_t>(raw);
         // std::cout << "new_value: " << new_value << std::endl;
-        data[index] = new_value/20560.0;
-        return new_value;
+        data[index] = static_cast<double>(value)/32767.0f;
+        return value;
     }
 
     void get_sensor_data(double dt) {
@@ -111,7 +115,7 @@ public:
         get_rotary_data(3);
     }
 
-    float* get_data() {
+    double* get_data() {
         return data;
     }
 };
@@ -119,4 +123,4 @@ public:
 
 
 // single shot on a3 - GND: 0b 10100011 1(111)0(101)
-// default 0b1000001110000101
+// default 0b10000011 1 000 010 1

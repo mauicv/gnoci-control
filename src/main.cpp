@@ -37,20 +37,19 @@ Response handle_message(
     ) {
 
     
-    // test code
+//     test code
     if ((count / 20) % 2) {
-        servos.update_setpoints({0.4});
+        servos.update_setpoints({-1, -1, -1});
     } else {
-        servos.update_setpoints({-0.4});
+        servos.update_setpoints({1, 1, 1});
     }
-    // end test code
+//     end test code
 
-    float* data = asd1115.get_data();
-    // std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]);
-    std::string response = std::to_string(data[3]);
+    double* data = asd1115.get_data();
+    std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]) + " " + std::to_string(data[3]);
     char content[response.length()];
     strcpy(content, response.c_str());
-    // std::cout << "response: " << content << std::endl;
+    std::cout << "response: " << content << std::endl;
     return Response{content, (int)response.length(), true};
 }
 
@@ -82,13 +81,14 @@ int main() {
     };
     
     std::vector<Servo> servo_list;
-    servo_list.emplace_back(pi, "servo1", 17, 0.08, 0.01, 0.005, 0, 0.4, -0.4, 0);
-    // servo_list.emplace_back(pi, "servo2", 27, 0.08, 0.01, 0.005, 0, 0.7, -1, 0);
+    servo_list.emplace_back(pi, "servo1", 17, 0.18, 0.01, 0.005, -0.5, -0.2, -0.7, 0);
+    servo_list.emplace_back(pi, "servo2", 27, 0.18, 0.01, 0.005, -0.75, -0.5, -1, 0);
+    servo_list.emplace_back(pi, "servo3", 22, 0.18, 0.01, 0.005, 0, 0.2, -0.7, 0);
     ServoGroup servos(servo_list);
     
     ScheduledExecutor servo_executor(
         std::bind(set_servo_values, std::ref(servos), _1),
-        0.0001
+        0.001
     );
 
     // --------------------------------------------------------- //
@@ -97,8 +97,7 @@ int main() {
     asd1115_executor.start();
     // mpu6050_executor.start();
 
-    servos.update_setpoints({0.0});
-
+    
     Channel channel(
         8000,
         std::bind(handle_message, std::ref(asd1115), std::ref(servos), _1, _2)
@@ -108,15 +107,21 @@ int main() {
     // int i = 0;
     // while (true) {
     //     i++;
-    //     if ((i / 20) % 2) {
-    //         servos.update_setpoints({0.4});
+    //     if ((i / 40) % 2) {
+    //         std::cout << "i: " << i << std::endl;
+    //         servos.update_setpoints({-1, -1, -1});
     //     } else {
-    //         servos.update_setpoints({-0.4});
+    //         servos.update_setpoints({1, 1, 1});
     //     }
-    //     float* data = asd1115.get_data();
-    //     std::cout << "Rotary position: " << data[3] << std::endl;
     //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //     double* data = asd1115.get_data();
+    //     std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]) + " " + std::to_string(data[3]);
+    //     char content[response.length()];
+    //     strcpy(content, response.c_str());
+    //     std::cout << "response: " << content << std::endl;
     // }
+
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
     
     pigpio_stop(pi); // disconnect from daemon
     // mpu6050_executor.stop();
