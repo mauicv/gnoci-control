@@ -1,5 +1,5 @@
-#ifndef ASD1115_H
-#define ASD1115_H
+#ifndef PRESSURE_SENSOR_H
+#define PRESSURE_SENSOR_H
 
 
 #include <iostream>
@@ -44,12 +44,12 @@ const std::map<int, unsigned int> config_map = {
     {3, 0b1110001111110011}
 };
 
-class ASD1115 {
+class PressureSensor {
 public:
     int f_dev;
-    double data[4];
+    double data;
  
-    ASD1115() {
+    PressureSensor() {
         f_dev = open("/dev/i2c-1", O_RDWR);
         std::cout << "f_dev: " << f_dev << std::endl;
         if (f_dev < 0) {
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    uint16_t get_rotary_data(int index)  {
+    uint16_t get_ADC_data(int index)  {
         write_word(f_dev, 0x01, config_map.at(index));
         while ((read_word(f_dev, 0x01) & 0b0000000010000000) == 0) {
             std::this_thread::sleep_for(std::chrono::milliseconds(2)); 
@@ -72,22 +72,19 @@ public:
         raw = static_cast<uint16_t>((raw << 8) | (raw >> 8));
         int16_t value = static_cast<int16_t>(raw);
         // std::cout << "new_value: " << new_value << std::endl;
-        data[index] = static_cast<double>(value)/32767.0f;
-        return value;
+        data = static_cast<double>(value)/32767.0f;
+        return data;
     }
 
     void get_sensor_data(double dt) {
-        get_rotary_data(0);
-        get_rotary_data(1);
-        get_rotary_data(2);
-        get_rotary_data(3);
+        get_ADC_data(0);
     }
 
-    double* get_data() {
+    double get_data() {
         return data;
     }
 };
-#endif // ASD1115_H
+#endif // PRESSURE_SENSOR_H
 
 
 // single shot on a3 - GND: 0b 10100011 1(111)0(101)

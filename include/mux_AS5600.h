@@ -43,7 +43,7 @@ class MuxAS5600 {
 public:
     int f_dev;
     int sensor_f_dev;
-    double data[7];
+    double data[8];
     uint8_t channel_byte;
  
     MuxAS5600(uint8_t channel_byte): channel_byte(channel_byte) {
@@ -70,7 +70,18 @@ public:
         }
 
         write_byte_simple(f_dev, 0b00000000);
-        get_sensor_data(0.001);
+
+        scan();
+    }
+
+    void scan() {
+        for (int i = 7; i >= 0; --i) {
+            if (channel_byte & (1 << i)) {
+                write_byte_simple(f_dev, (1 << i));
+                uint8_t status = read_byte(sensor_f_dev, 0x0B);
+                std::cout << toBinaryString(1 << i) << " -> " << toBinaryString(status) << std::endl;
+            }
+        }
     }
 
     void get_sensor_data(double dt) {
@@ -81,14 +92,8 @@ public:
                 uint8_t lsb = read_byte(sensor_f_dev, 0x0F);
                 uint16_t value = (msb << 8) | lsb;
                 data[i] = static_cast<double>(value)/1000.0;
-                std::cout << data[i] << std::endl;
             }
         }
-    }
-
-    void read_sensor_data(uint8_t sensor_address) {
-        uint8_t ret = read_byte(sensor_f_dev, 0x00);
-        std::cout << toBinaryString(ret) << std::endl;
     }
 
     double* get_data() {
