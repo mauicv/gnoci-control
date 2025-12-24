@@ -96,4 +96,24 @@ bool write_word(int f_dev, uint8_t reg, uint16_t val) {
     return 1;
 }
 
+uint8_t write_byte_simple(int f_dev, uint8_t val) {
+    int32_t ret = i2c_smbus_write_byte(f_dev, val);
+    if (ret < 0) {
+        std::cout << "Error writing\n";
+        return 0;
+    }
+    return 1;
+}
+
+uint8_t read_byte_simple(int f_dev) {
+    int32_t ret = i2c_smbus_read_byte(f_dev);
+    if (ret < 0) {
+        std::cout << "Error reading\n";
+        return 0;
+    }
+    uint8_t byte = static_cast<uint8_t>(ret);
+    return byte;
+}
+
+
 #endif // I2C_UTIL_H

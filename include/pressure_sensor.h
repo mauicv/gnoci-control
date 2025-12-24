@@ -56,7 +56,7 @@ public:
             std::cout << "Failed to open /dev/i2c-1\n";
         }
 
-        if (ioctl(f_dev, I2C_SLAVE, 0x48) < 0) {
+        if (ioctl(f_dev, I2C_SLAVE, 0x49) < 0) {
             std::cout << "Failed to set I2C slave address\n";
         }
     }
