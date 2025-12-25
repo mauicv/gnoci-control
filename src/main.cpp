@@ -11,13 +11,14 @@
 #include "mux_AS5600.h"
 // #include "AS5600.h"
 #include <functional>
+#include "mux_pwm.h"
 using namespace std::placeholders;
 
 
-bool get_mux_as5600_data(MuxAS5600& mux_as5600, double dt) {
-    mux_as5600.get_sensor_data(dt);
-    return true;
-};
+// bool get_mux_as5600_data(MuxAS5600& mux_as5600, double dt) {
+//     mux_as5600.get_sensor_data(dt);
+//     return true;
+// };
 
 // bool get_as5600_data(AS5600& as5600, double dt) {
 //     as5600.get_sensor_data(dt);
@@ -71,15 +72,39 @@ bool get_mux_as5600_data(MuxAS5600& mux_as5600, double dt) {
 
 // --------------------- MAIN CODE --------------------- //
 int main() {
-    // --------------------- AS5600 CODE --------------------- //
-    // AS5600 as5600;
-    // ScheduledExecutor as5600_executor(
-    //     std::bind(get_as5600_data, std::ref(as5600), _1),
-    //     0.001
-    // );
+    MuxPWM mux_pwm;
+    // mux_pwm.set_pwm(1, 1000);
+    // mux_pwm.set_pwm(2, 1000);
+    // mux_pwm.set_pwm(3, 1000);
+    // mux_pwm.set_pwm(4, 1000);
+    // mux_pwm.set_pwm(5, 1000);
+    // mux_pwm.set_pwm(6, 1000);
+    // mux_pwm.set_pwm(7, 1000);
+    // mux_pwm.set_pwm(8, 1000);
+    // mux_pwm.set_pwm(9, 1000);
+    // mux_pwm.set_pwm(10, 1000);
+    // mux_pwm.set_pwm(11, 1000);
+    // mux_pwm.set_pwm(12, 1000);
+    // mux_pwm.set_pwm(13, 1000);
+    // mux_pwm.set_pwm(14, 1000);
+    // mux_pwm.set_pwm(15, 1000);
+    // mux_pwm.set_pwm(16, 1000);
+
+    int values_1[16] = {2000, 2000, 2000, 2000, 2000, 2000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
+    int values_2[16] = {1000, 1000, 1000, 1000, 1000, 1000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000};
+    // mux_pwm.ai_write(values_2);
+    while (true) {
+        std::cout << "writing values 1" << std::endl;
+        mux_pwm.ai_write(values_1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        std::cout << "writing values 2" << std::endl;
+        mux_pwm.ai_write(values_2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 
     // --------------------- MUX AS5600 CODE --------------------- //
-    MuxAS5600 mux_as5600(0b11111111);
+    // MuxAS5600 mux_as5600(0b11111111);
 //     ScheduledExecutor mux_as5600_executor(
 //         std::bind(get_mux_as5600_data, std::ref(mux_as5600), _1),
 //         0.001
