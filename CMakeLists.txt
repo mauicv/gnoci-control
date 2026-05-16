@@ -56,6 +56,7 @@ target_link_libraries(gnoci PRIVATE scheduled_executor)
 # Link to the i2c library
 target_link_libraries(gnoci PRIVATE i2c)
 
+target_link_libraries(gnoci PRIVATE gpiod)
 
 enable_testing()
 

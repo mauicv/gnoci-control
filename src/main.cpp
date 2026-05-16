@@ -9,11 +9,15 @@
 #include <cstring>
 // #include "pressure_sensor.h"
 #include "mux_AS5600.h"
-// #include "AS5600.h"
+#include "AS5600.h"
 #include <functional>
 #include "mux_pwm.h"
 using namespace std::placeholders;
 
+#include <cmath>
+#include <random>
+#include <thread>
+#include <algorithm> 
 
 // bool get_mux_as5600_data(MuxAS5600& mux_as5600, double dt) {
 //     mux_as5600.get_sensor_data(dt);
@@ -69,46 +73,79 @@ using namespace std::placeholders;
 //     return Response{content, (int)response.length(), true};
 // }
 
+const std::map<int, int> servo_map = {
+    {0, 0},
+    {1, 2},
+    {2, 4},
+    {3, 1},
+    {4, 3},
+    {5, 5},
+
+    {6, 8},
+    {7, 10},
+    {8, 12},
+    {9, 9},
+    {10, 11},
+    {11, 13}
+};
+
+
 
 // --------------------- MAIN CODE --------------------- //
 int main() {
     MuxPWM mux_pwm;
-    // mux_pwm.set_pwm(1, 1000);
-    // mux_pwm.set_pwm(2, 1000);
-    // mux_pwm.set_pwm(3, 1000);
-    // mux_pwm.set_pwm(4, 1000);
-    // mux_pwm.set_pwm(5, 1000);
-    // mux_pwm.set_pwm(6, 1000);
-    // mux_pwm.set_pwm(7, 1000);
-    // mux_pwm.set_pwm(8, 1000);
-    // mux_pwm.set_pwm(9, 1000);
-    // mux_pwm.set_pwm(10, 1000);
-    // mux_pwm.set_pwm(11, 1000);
-    // mux_pwm.set_pwm(12, 1000);
-    // mux_pwm.set_pwm(13, 1000);
-    // mux_pwm.set_pwm(14, 1000);
-    // mux_pwm.set_pwm(15, 1000);
-    // mux_pwm.set_pwm(16, 1000);
+    // std::cout << "0x70" << std::endl;
+    // MuxAS5600 mux_as5600_0(0x70, 0b11111111);
+    // mux_as5600_0.scan();
 
-    int values_1[16] = {2000, 2000, 2000, 2000, 2000, 2000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
-    int values_2[16] = {1000, 1000, 1000, 1000, 1000, 1000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000};
-    // mux_pwm.ai_write(values_2);
-    while (true) {
-        std::cout << "writing values 1" << std::endl;
-        mux_pwm.ai_write(values_1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    // std::cout << "0x71" << std::endl;
+    // MuxAS5600 mux_as5600_1(0x71, 0b00000010);
+    // // mux_as5600_1.scan();
+    // mux_as5600_1.open_channel(1);
 
-        std::cout << "writing values 2" << std::endl;
-        mux_pwm.ai_write(values_2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
+    // AS5600 as5600;
+    // as5600.get_sensor_data(0.001);
+    // std::cout << "as5600 data: " << as5600.get_data() << std::endl;
+
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
+    // int values[16] = {307, 307, 307, 307, 307, 307, 307, 307, 307, 307, 307, 307, 307, 307, 307, 307};
+    // mux_pwm.ai_write(values);
+    mux_pwm.disable_output();
+    // int sum_time_taken = 0;
+    
+    // for (int j = 0; j < 16; j++) {
+    //     values[j] = 307;
+    //     // values[j] = 512;
+    // }
+    // mux_pwm.ai_write(values);
+
+    // for (int i = 100; i < 512; i++) {
+    //     auto t1 = high_resolution_clock::now();
+    //     mux_pwm.ai_write(values);
+    //     auto t2 = high_resolution_clock::now();
+    //     auto ms_int = duration_cast<milliseconds>(t2 - t1);
+    //     sum_time_taken += ms_int.count();
+    // }
+    
+    // // std::cout << "Time taken: " << sum_time_taken / 500.0 << " milliseconds" << std::endl;
+    
+
+    
+    // ScheduledExecutor as5600_executor(
+    //     std::bind(get_as5600_data, std::ref(as5600), _1),
+    //     0.001
+    // );
 
     // --------------------- MUX AS5600 CODE --------------------- //
     // MuxAS5600 mux_as5600(0b11111111);
-//     ScheduledExecutor mux_as5600_executor(
-//         std::bind(get_mux_as5600_data, std::ref(mux_as5600), _1),
-//         0.001
-//     );
+    // ScheduledExecutor mux_as5600_executor(
+    //     std::bind(get_mux_as5600_data, std::ref(mux_as5600_1), _1),
+    //     0.001
+    // );
 
 //     // --------------------- Pressure Sensor CODE --------------------- //
 //     // PressureSensor pressure_sensor;
@@ -133,11 +170,11 @@ int main() {
 // //         return 1;
 // //     };
     
-// //     std::vector<Servo> servo_list;
-// //     // servo_list.emplace_back(pi, "servo1", 17, 0.18, 0.01, 0.005, -0.5, -0.2, -0.7, 0);
-// //     // servo_list.emplace_back(pi, "servo2", 27, 0.18, 0.01, 0.005, -0.75, -0.5, -1, 0);
-// //     // servo_list.emplace_back(pi, "servo3", 22, 0.18, 0.01, 0.005, 0, 0.2, -0.7, 0);
-// //     ServoGroup servos(servo_list);
+    // std::vector<Servo> servo_list;
+    // servo_list.emplace_back(pi, "servo1", 17, 0.18, 0.01, 0.005, -0.5, -0.2, -0.7, 0);
+    // servo_list.emplace_back(pi, "servo2", 27, 0.18, 0.01, 0.005, -0.75, -0.5, -1, 0);
+    // servo_list.emplace_back(pi, "servo3", 22, 0.18, 0.01, 0.005, 0, 0.2, -0.7, 0);
+    // ServoGroup servos(servo_list);
     
 // //     // ScheduledExecutor servo_executor(
 // //     //     std::bind(set_servo_values, std::ref(servos), _1),
@@ -149,7 +186,7 @@ int main() {
 // //     // servo_executor.start();
 //     mux_as5600_executor.start();
 //     // pressure_sensor_executor.start();
-//     // as5600_executor.start();
+    // as5600_executor.start();
 // //     // mpu6050_executor.start();
 
     
@@ -159,31 +196,32 @@ int main() {
     // );
     // channel.start();
     
-    // int i = 0;
-    // while (true) {
-    //     // i++;
-    //     // if ((i / 40) % 2) {
-    //     //     std::cout << "i: " << i << std::endl;
-    //     //     servos.update_setpoints({-1, -1, -1});
-    //     // } else {
-    //     //     servos.update_setpoints({1, 1, 1});
-    //     // }
-    //     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //     mux_as5600.scan();
-    //     // double* data = mux_as5600.get_data();
-    //     // std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]) + " " + std::to_string(data[3]);
-    //     // char content[response.length()];
-    //     // strcpy(content, response.c_str());
-    //     // std::cout << "response: " << content << std::endl;
-    //     // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // }
+//     int i = 0;
+//     while (true) {
+//         // i++;
+//         // if ((i / 40) % 2) {
+//         //     std::cout << "i: " << i << std::endl;
+//         //     servos.update_setpoints({-1, -1, -1});
+//         // } else {
+//         //     servos.update_setpoints({1, 1, 1});
+//         // }
+//         // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//         // mux_as5600.scan();
+//         // double* data = mux_as5600.get_data();
+//         // std::string response = std::to_string(data[0]) + " " + std::to_string(data[1]) + " " + std::to_string(data[2]) + " " + std::to_string(data[3]);
+//         // char content[response.length()];
+//         // strcpy(content, response.c_str());
+//         // std::cout << "response: " << content << std::endl;
+//         // std::this_thread::sleep_for(std::chrono::seconds(1));
+//         std::cout << "as5600 data: " << as5600.get_data() << std::endl;
+//     }
 
     
-//     pigpio_stop(pi); // disconnect from daemon
-//     // mpu6050_executor.stop();
-    // mux_as5600_executor.stop();
-    // pressure_sensor_executor.stop();
-    // as5600_executor.stop();
-//     // servo_executor.stop();
-    return 0;
+// //     pigpio_stop(pi); // disconnect from daemon
+// //     // mpu6050_executor.stop();
+//     // mux_as5600_executor.stop();
+//     // pressure_sensor_executor.stop();
+//     as5600_executor.stop();
+// //     // servo_executor.stop();
+//     return 0;
 }

@@ -10,6 +10,7 @@
 #include <map>
 #include "i2c_util.h"
 #include <string>
+#include <gpiod.h>
 using std::string;
 
 extern "C" {
@@ -40,10 +41,16 @@ const std::map<int, unsigned int> channel_map = {
     {16, 0x42}
 };
 
+
+
+
 class MuxPWM {
-public:
+    public:
     int f_dev;
     uint8_t buf[64] = {0};
+    // In MuxPWM class:
+    struct gpiod_chip* chip = nullptr;
+    struct gpiod_line* oe_line = nullptr;
  
     MuxPWM() {
         // initialize PCA9685 I2C bus
@@ -56,17 +63,34 @@ public:
         if (ioctl(f_dev, I2C_SLAVE, 0x40) < 0) {
             std::cout << "Failed to set I2C slave address\n";
         }
-
         
         // set prescale sequence - sleep mode, prescale value write, wake up mode
+        // set auto increment mode
         write_byte(f_dev, 0x00, 0b00110001);
         write_byte(f_dev, 0xFE, PRESCALE);
         int prescale = read_byte(f_dev, 0xFE);
         write_byte(f_dev, 0x00, 0b00100001);
         uint8_t mode = read_byte(f_dev, 0x00);
-
+        
         std::cout << "prescale: " << prescale << std::endl;
         std::cout << "mode_1: " << toBinaryString(mode) << std::endl;
+
+        init_oe();
+    }
+    
+    
+    void init_oe(int gpio_pin = 28) {
+        chip = gpiod_chip_open("/dev/gpiochip0");
+        oe_line = gpiod_chip_get_line(chip, gpio_pin);
+        gpiod_line_request_output(oe_line, "mux_pwm_oe", 0); // start LOW (enabled)
+    }
+    
+    void disable_output() {
+        gpiod_line_set_value(oe_line, 1); // HIGH = outputs off
+    }
+    
+    void enable_output() {
+        gpiod_line_set_value(oe_line, 0); // LOW = outputs on
     }
     
     void set_pwm(int channel, int pwm) {
@@ -83,9 +107,19 @@ public:
     }
 
     void ai_write(int* values) {
+        // servo values are in the range 102 to 512, center is 307
         for (int i = 0; i < 16; i++) {
             buf[i*4 + 2] = values[i] & 0xFF; // LSB
             buf[i*4 + 3] = values[i] >> 8; // MSB
+        }
+        i2c_smbus_write_i2c_block_data(f_dev, START_REG, 32, buf);
+        i2c_smbus_write_i2c_block_data(f_dev, START_REG + 32, 32, buf + 32);
+    }
+
+    void ai_off() {
+        memset(buf, 0, 64);
+        for (int i = 0; i < 16; i++) {
+            buf[i*4 + 3] = 0x10;  // full-off bit in OFF_H
         }
         i2c_smbus_write_i2c_block_data(f_dev, START_REG, 32, buf);
         i2c_smbus_write_i2c_block_data(f_dev, START_REG + 32, 32, buf + 32);

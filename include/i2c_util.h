@@ -51,7 +51,7 @@ std::string bit32ToBinaryString(uint32_t byte) {
 uint8_t read_byte(int f_dev, uint8_t reg) {
     int32_t ret = i2c_smbus_read_byte_data(f_dev, reg);
     if (ret < 0) {
-        std::cout << "Error reading from ASD1115\n";
+        // std::cout << "Error reading from ASD1115\n";
         return 0;
     }
     uint8_t byte = static_cast<uint8_t>(ret);
@@ -61,7 +61,7 @@ uint8_t read_byte(int f_dev, uint8_t reg) {
 uint8_t write_byte(int f_dev, uint8_t reg, uint8_t val) {
     int32_t ret = i2c_smbus_write_byte_data(f_dev, reg, val);
     if (ret < 0) {
-        std::cout << "Error writing to ASD1115\n";
+        // std::cout << "Error writing to ASD1115\n";
         return 0;
     }
     return 1;
@@ -70,7 +70,7 @@ uint8_t write_byte(int f_dev, uint8_t reg, uint8_t val) {
 bool read_block(int f_dev, uint8_t reg, uint8_t* data, uint8_t length) {
     int32_t ret = i2c_smbus_read_i2c_block_data(f_dev, reg, length, data);
     if (ret < 0) {
-        std::cout << "Error reading from ASD1115\n";
+        // std::cout << "Error reading from ASD1115\n";
         return false;
     }
     return true;
@@ -79,7 +79,7 @@ bool read_block(int f_dev, uint8_t reg, uint8_t* data, uint8_t length) {
 uint16_t read_word(int f_dev, uint8_t reg) {
     int32_t ret = i2c_smbus_read_word_data(f_dev, reg);
     if (ret < 0) {
-        std::cout << "Error reading from TCA9548A\n";
+        // std::cout << "Error reading from TCA9548A\n";
         return 0;
     }
     uint16_t word = static_cast<uint16_t>(ret);
@@ -90,7 +90,7 @@ uint16_t read_word(int f_dev, uint8_t reg) {
 bool write_word(int f_dev, uint8_t reg, uint16_t val) {
     int32_t ret = i2c_smbus_write_word_data(f_dev, reg, val);
     if (ret < 0) {
-        std::cout << "Error writing to TCA9548A\n";
+        // std::cout << "Error writing to TCA9548A\n";
         return 0;
     }
     return 1;
@@ -99,7 +99,7 @@ bool write_word(int f_dev, uint8_t reg, uint16_t val) {
 uint8_t write_byte_simple(int f_dev, uint8_t val) {
     int32_t ret = i2c_smbus_write_byte(f_dev, val);
     if (ret < 0) {
-        std::cout << "Error writing\n";
+        // std::cout << "Error writing\n";
         return 0;
     }
     return 1;
@@ -108,7 +108,7 @@ uint8_t write_byte_simple(int f_dev, uint8_t val) {
 uint8_t read_byte_simple(int f_dev) {
     int32_t ret = i2c_smbus_read_byte(f_dev);
     if (ret < 0) {
-        std::cout << "Error reading\n";
+        // std::cout << "Error reading\n";
         return 0;
     }
     uint8_t byte = static_cast<uint8_t>(ret);
