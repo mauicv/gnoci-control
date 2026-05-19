@@ -1,0 +1,7 @@
+click
+python-dotenv
+numpy
+scipy
+google-cloud-storage
+torch
+tqdm
