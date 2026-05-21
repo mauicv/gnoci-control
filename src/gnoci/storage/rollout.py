@@ -24,3 +24,9 @@ class GCSRollout:
         )
         for blob in blobs:
             blob.delete()
+
+    def list_rollouts(self):
+        blobs = self.bucket.list_blobs(
+            prefix=f'{self.experiment_name}/rollouts'
+        )
+        return [blob.name for blob in blobs]

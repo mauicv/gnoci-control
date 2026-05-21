@@ -11,6 +11,7 @@ class Rollout:
     noise: list[list[float]]
     times: list[float]
     conditions: list[list[float]]
+    commands: list[list[float]]
     end_index: int = None
 
     def to_dict(self):
@@ -35,6 +36,7 @@ class Rollout:
             action = action.tolist()
         if isinstance(noise, np.ndarray):
             noise = noise.tolist()
+
         self.states.append(state)
         self.actions.append(action)
         self.filtered_actions.append(filtered_action)

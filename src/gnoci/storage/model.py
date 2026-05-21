@@ -1,4 +1,3 @@
-import torch
 import logging
 logger = logging.getLogger(__name__)
 
@@ -13,11 +12,9 @@ class GCSModel:
             self,
             bucket,
             experiment_name,
-            model_limits=25,
         ) -> None:
         self.bucket = bucket
         self.model = None
-        self.model_limits = model_limits
         self.experiment_name = experiment_name
         self.version = self.get_latest_model_version()
 
@@ -26,17 +23,9 @@ class GCSModel:
         for blob in blobs:
             blob.delete()
 
-    def remove_old_models(self):
+    def list_models(self):
         blobs = self.bucket.list_blobs(prefix=f'{self.experiment_name}/actor')
-        filtered_blobs = [blob for blob in blobs if blob.name.endswith('.pt')]
-        self.version = max([parse_version(blob.name) for blob in filtered_blobs])
-        version_diff = self.version - self.model_limits
-        filtered_blobs = [
-            blob for blob in filtered_blobs
-            if parse_version(blob.name) < version_diff
-        ]
-        for blob in filtered_blobs:
-            blob.delete()
+        return [blob.name for blob in blobs if blob.name.endswith('.pt')]
 
     def get_latest_model_version(self):
         try:
@@ -54,6 +43,7 @@ class GCSModel:
         return version
 
     def upload_model(self, model):
+        import torch
         if self.version is None: self.version = self.get_latest_model_version()
         logger.info(f"'self.version', {self.version}")
 

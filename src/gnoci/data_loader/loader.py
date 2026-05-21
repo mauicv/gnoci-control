@@ -28,7 +28,6 @@ class DataLoader:
             action_dim=8,
             num_time_steps=25,
             reward_type='walking',
-            reward_function=default_velocity_reward,
             means=PRECOMPUTED_MEANS,
             stds=PRECOMPUTED_STDS,
         ) -> None:
