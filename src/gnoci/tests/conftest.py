@@ -1,9 +1,9 @@
 import pytest
 import random
 import time
-from peripherals.gnoci.servo_controller import ServoController
-from peripherals.gnoci.mpu6050Mixin import MPU6050Mixin
-from peripherals.gnoci.servo import Servo
+from gnoci.servo_controller import ServoController
+from gnoci.mpu6050Mixin import MPU6050Mixin
+from gnoci.servo import Servo
 
 
 class MockValues:

@@ -14,9 +14,10 @@ def cli():
 
 
 try:
-    from peripherals.gnoci import gnoci
+    from gnoci import gnoci
     cli.add_command(gnoci)
 except ImportError:
+    logger.error(error)
     pass
 
 try:

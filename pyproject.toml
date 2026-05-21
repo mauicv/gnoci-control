@@ -18,22 +18,17 @@ classifiers = [
 dependencies = [
     "click",
     "python-dotenv",
-    "numpy",
-    "scipy",
+    "numpy"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 server = [
     "simple-pid",
-    "pigpio",
     "smbus2",
-    "opencv-python",
-    "opencv-contrib-python",
-    "filterpy"
+    "google-cloud-storage",
 ]
 client = [
-    "google-cloud-storage",
     "torch",
     "tqdm"
 ]

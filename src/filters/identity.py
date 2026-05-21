@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 
 class IdentityFilter:
     def __init__(
@@ -9,7 +8,7 @@ class IdentityFilter:
         pass
 
     def __call__(self, new_values):
-        if isinstance(new_values, (np.ndarray, torch.Tensor)):
+        if isinstance(new_values, (np.ndarray)):
             return new_values.tolist()
         return new_values
     

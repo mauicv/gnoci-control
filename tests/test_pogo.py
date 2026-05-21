@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 from tqdm import tqdm
-from peripherals.gnoci import Gnoci
+from gnoci import Gnoci
 from rollout import rollout
 
 
