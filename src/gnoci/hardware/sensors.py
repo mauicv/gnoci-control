@@ -1,7 +1,7 @@
 import time
-from filters.complementary import ComplementaryFilter
-from filters.identity import IdentityFilter
-from loop import Loop
+from gnoci.filters.complementary import ComplementaryFilter
+from gnoci.filters.identity import IdentityFilter
+from gnoci.loop import Loop
 from gnoci.hardware.hardware import (
     read_sensor_data,
     decode_imu,

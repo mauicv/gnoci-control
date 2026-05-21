@@ -18,20 +18,24 @@ classifiers = [
 dependencies = [
     "click",
     "python-dotenv",
-    "numpy"
+    "numpy",
+    "tqdm"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-server = [
+gnoci = [
     "simple-pid",
     "smbus2",
     "google-cloud-storage",
+    "onnxruntime"
 ]
 client = [
     "torch",
-    "tqdm"
+]
+controller = [
+    "google-cloud-storage",
 ]
 
 [project.scripts]
-gnoci = "cli:cli"
+gnoci = "gnoci.cli:cli"

@@ -1,5 +1,5 @@
 from gnoci.servo import Servo
-from loop import Loop
+from gnoci.loop import Loop
 import time
 from gnoci.hardware.hardware import init_pca9685
 from gnoci.hardware.hardware import write_servos

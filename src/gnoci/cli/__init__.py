@@ -14,18 +14,11 @@ def cli():
 
 
 try:
-    from gnoci import gnoci
-    cli.add_command(gnoci)
-except ImportError:
-    logger.error(error)
-    pass
-
-try:
-    from client import client
-    cli.add_command(client)
+    from gnoci.cli.control import start
+    cli.add_command(start)
 except ImportError as error:
     logger.error(error)
-    pass
+    raise error
 
 
 if __name__ == "__main__":
