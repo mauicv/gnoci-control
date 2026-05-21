@@ -13,7 +13,7 @@ generic_values = {
 }
 
 def setup_gnoci_control(
-    update_interval: float = 0.01,
+    freq: int = 100,
 ):
     servos: list[Servo] = [
         Servo(name="front_right_top", pin_id=0, pin=4, pin_limits=(-0.3, 0.9), init_value=-0.4, offset=0.0, **generic_values),
@@ -30,12 +30,12 @@ def setup_gnoci_control(
 
     servo_controller = ServoController(
         bus=bus,
-        freq=update_interval,
+        freq=freq,
         servos=servos,
     )
     sensor_reader = SensorReader(
         bus=bus,
-        freq=update_interval,
+        freq=freq,
     )
     gnoci = Gnoci(
         servo_controller=servo_controller,

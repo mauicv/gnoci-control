@@ -6,16 +6,11 @@ from gnoci.storage.rollout import GCSRollout
 class GCS_Interface:
     def __init__(
             self,
-            experiment_name,
-            model_name=None,
+            experiment_name='none',
+            model_name='none',
             credentials='gnoci-497019-ecf9e3fbc49e.json',
             project_id='gnoci',
             bucket='gnoci',
-            num_runs=0,
-            rollout_length=100,
-            state_dim=14,
-            action_dim=8,
-            num_time_steps=25,
         ) -> None:
         if credentials:
             client = storage.Client.from_service_account_json(credentials)
@@ -34,3 +29,7 @@ class GCS_Interface:
             self.bucket,
             experiment_name=experiment_name
         )
+
+    def list_experiments(self):
+        blobs = self.bucket.list_blobs(prefix='')
+        return set(blob.name.split('/')[0] for blob in blobs)

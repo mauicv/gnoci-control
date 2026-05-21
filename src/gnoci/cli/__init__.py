@@ -14,8 +14,14 @@ def cli():
 
 
 try:
-    from gnoci.cli.control import start
+    from gnoci.cli.control import (
+        start,
+        run_checks,
+        control_loop
+    )
     cli.add_command(start)
+    cli.add_command(run_checks)
+    cli.add_command(control_loop)
 except ImportError as error:
     logger.error(error)
     raise error

@@ -21,17 +21,12 @@ class Gnoci():
             'read': self.get_data,
         }[command](**args)
     
-    def act(self, values: list[float]):
-        self.servo_controller.update_setpoint_delta(values)
-        return True
-    
-    def set_servo_states(self, values: list[float]):
-        self.servo_controller.update_setpoint(values)
+    def actuate(self, values: list[float], delta: bool = True):
+        if delta:
+            self.servo_controller.update_setpoint_delta(values)
+        else:
+            self.servo_controller.update_setpoint(values)
         return True
 
-    def get_data(self):
+    def sense(self):
         return self.sensor_reader.data
-    
-    def deinit(self):
-        self.deinit_servo_controller()
-        self.deinit_mpu()

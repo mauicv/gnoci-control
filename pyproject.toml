@@ -28,7 +28,8 @@ gnoci = [
     "simple-pid",
     "smbus2",
     "google-cloud-storage",
-    "onnxruntime"
+    "onnxruntime",
+    "onnx"
 ]
 client = [
     "torch",
