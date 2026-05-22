@@ -15,9 +15,20 @@ def list_models(experiment_name):
     gcs = GCS_Interface(
         credentials='gnoci-497019-ecf9e3fbc49e.json',
         bucket='gnoci',
-        experiment_name='test'
+        experiment_name=experiment_name
     )
     print(gcs.model.list_models())
+
+@storage.command()
+@click.option('--experiment-name', type=str, default='test')
+@click.option('--version', type=int, default=None)
+def download_model(experiment_name, version):
+    gcs = GCS_Interface(
+        credentials='gnoci-497019-ecf9e3fbc49e.json',
+        bucket='gnoci',
+        experiment_name=experiment_name
+    )
+    print(gcs.model.download_model(version))
 
 @storage.command()
 @click.option('--experiment-name', type=str, default='test')
@@ -25,15 +36,15 @@ def list_rollouts(experiment_name):
     gcs = GCS_Interface(
         credentials='gnoci-497019-ecf9e3fbc49e.json',
         bucket='gnoci',
-        experiment_name='test'
+        experiment_name=experiment_name
     )
     print(gcs.rollout.list_rollouts())
-
 
 @storage.command()
 def list_experiments():
     gcs = GCS_Interface(
         credentials='gnoci-497019-ecf9e3fbc49e.json',
         bucket='gnoci',
+        experiment_name=experiment_name
     )
     print(gcs.list_experiments())

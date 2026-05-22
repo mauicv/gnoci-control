@@ -6,8 +6,8 @@ from gnoci.storage.rollout import GCSRollout
 class GCS_Interface:
     def __init__(
             self,
-            experiment_name='none',
-            model_name='none',
+            experiment_name=None,
+            model_name=None,
             credentials='gnoci-497019-ecf9e3fbc49e.json',
             project_id='gnoci',
             bucket='gnoci',

@@ -1,6 +1,7 @@
 import io
 import os
 import logging
+from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
@@ -62,25 +63,27 @@ class GCSModel:
             logger.error(f"Error uploading model: {e}")
             raise e
 
-    def download_model(self):
-        remote_version = self.get_latest_model_version()
-        if remote_version is None:
-            logger.info('no remote model found')
-            return None
-        if remote_version == self.version and self.model is not None:
+    def download_model(self, version=None):
+        if version is None:
+            version = self.get_latest_model_version()
+        
+        if version == self.version and self.model is not None:
             logger.info(f'model version {self.version} already loaded')
             return self.model
 
-        blob_name = f"{self.experiment_name}/actor/actor-{remote_version}.onnx"
+        blob_name = f"{self.experiment_name}/actor/actor-{version}.onnx"
         blob = self.bucket.blob(blob_name)
         os.makedirs('model', exist_ok=True)
         for f in os.listdir('model'):
             if f.endswith('.onnx'):
                 os.remove(os.path.join('model', f))
                 logger.info(f'deleted old model {f}')
-        local_path = f"model/actor-{remote_version}.onnx"
-        blob.download_to_filename(local_path)
+        local_path = f"model/actor-{version}.onnx"
+        blob.reload()
+        with open(local_path, 'wb') as f:
+            with tqdm.wrapattr(f, 'write', total=blob.size, desc=f'actor-{version}.onnx', unit='B', unit_scale=True) as wrapped:
+                blob.download_to_file(wrapped)
         self.model = local_path
-        self.version = remote_version
+        self.version = version
         logger.info(f'downloaded model version {self.version} to {local_path}')
         return local_path

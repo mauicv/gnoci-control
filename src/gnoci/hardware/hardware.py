@@ -27,14 +27,10 @@ device_map = {
 
 
 def init_pca9685(bus, addr=PWM_MUX_ADDR, freq=50):
-    # TODO: implement other frequencies (100hz)
-    # Put to sleep
-    bus.write_byte_data(addr, 0x00, 0x10)
-    # Set prescaler (25MHz internal osc)
+    bus.write_byte_data(addr, 0x00, 0x10)  # sleep
     prescale = round(25_000_000 / (4096 * freq)) - 1
     bus.write_byte_data(addr, 0xFE, prescale)
-    # Wake up + auto-increment enabled
-    bus.write_byte_data(addr, 0x00, 0x20)
+    bus.write_byte_data(addr, 0x00, 0x20)  # wake + auto-increment
     time.sleep(0.005)  # oscillator settle
 
 def init_mpu6050(bus, addr=IMU_ADDR):
@@ -78,17 +74,18 @@ def read_muxes(bus):
         bus.write_byte(mux_addr, 0)
     return rot_enc_data, adc_data
 
-def write_servos(bus, data):
-    # TODO: implement data
-    data = []
-    for ch in range(NUM_SERVOS):
+def write_servos(bus, data, freq):
+    period_us = 1_000_000 / freq
+    ticks_per_us = 4096 / period_us
+    byte_data = []
+    for pwm_us in data:
         on = 0
-        off = 307  # dummy PWM value
-        data += [on & 0xFF, on >> 8, off & 0xFF, off >> 8]
+        off = min(4095, round(pwm_us * ticks_per_us))
+        byte_data += [on & 0xFF, on >> 8, off & 0xFF, off >> 8]
     chunk = 32  # 8 channels * 4 bytes
-    for i in range(0, len(data), chunk): 
+    for i in range(0, len(byte_data), chunk):
         reg = PCA9685_LED0 + (i // 4) * 4
-        bus.write_i2c_block_data(PWM_MUX_ADDR, reg, data[i:i + chunk])
+        bus.write_i2c_block_data(PWM_MUX_ADDR, reg, byte_data[i:i + chunk])
 
 def read_sensor_data(bus):
     imu_data = bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14)

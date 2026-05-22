@@ -8,24 +8,25 @@ HALF_RANGE = (SERVO_PWM_THRESHOLD_MAX - SERVO_PWM_THRESHOLD_MIN) / 2 # 1000
 @dataclass
 class Servo:
     name: str
-    pin_id: int
-    pin: int
     pin_limits: tuple[float, float]
     init_value: float
     reverse: bool = False
-    kp: float = 0.02
-    ki: float = 0.02
-    kd: float = 0.01
+    kp: float = 0.08
+    ki: float = 0.0
+    kd: float = 0.005
     _value: float = 0.0
     _update_value: float = 0.0
     pid_controller: PID = None
     offset: float = 0.0
+    freq: int = 100
 
     def __post_init__(self):
         self.pid_controller = PID(
             self.kp, self.ki, self.kd,
             starting_output=0,
             setpoint=self.init_value,
+            output_limits=(-0.05, 0.05),  # max 5 units/tick = 5 units/sec at 100Hz
+            sample_time=1.0 / self.freq,
         )
 
     def update_setpoint_delta(self, setpoint_delta: float):
