@@ -66,19 +66,19 @@ class SensorReader:
         """Returns the most recent filtered MPU data"""
         self.decode_hardware()
         return [
-            *self.latest_filtered_data,
-            self.c_filter.roll,
-            self.c_filter.pitch,
-            self.overturned,
-            self.last_mpus6050_sample_ts
+            *self.imu_data,
+            *self.rot_enc_data,
+            *self.adc_data,
+            self.roll,
+            self.pitch,
         ]
 
     @property
     def overturned(self):
-        _, _, az = self.latest_filtered_data[:3]
+        _, _, az = self.imu_data[:3]
         overturned = az * 10 < 1
         return int(overturned)
 
-    def deinit_mpu(self):
+    def deinit(self):
         """Clean up resources"""
-        self.mpu_update_loop.stop()
+        self.hardware_loop.stop()

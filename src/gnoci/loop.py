@@ -16,17 +16,22 @@ class Loop:
         self._thread.start()
 
     def _loop(self):
-        next_tick = time.perf_counter()
-        while self._running:
-            self.func()
-            self.count += 1
-            if self.limit and self.count >= self.limit:
-                self._running = False
-                break
-            next_tick += self.interval
-            sleep_time = next_tick - time.perf_counter()
-            if sleep_time > 0:
-                time.sleep(sleep_time)
+        try:
+            next_tick = time.perf_counter()
+            while self._running:
+                self.func()
+                self.count += 1
+                if self.limit and self.count >= self.limit:
+                    self._running = False
+                    break
+                next_tick += self.interval
+                sleep_time = next_tick - time.perf_counter()
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+        except Exception as e:
+            print(f"Error in loop: {e}")
+            self._running = False
+            self.stop()
 
     def stop(self):
         self._running = False

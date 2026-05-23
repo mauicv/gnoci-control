@@ -39,5 +39,5 @@ class ServoController:
         servo_data = [servo.get_pwm() for servo in self.servos]
         write_servos(self.bus, servo_data, self.freq)
 
-    def deinit_servo_controller(self):
+    def deinit(self):
         self.servo_update_loop.stop()

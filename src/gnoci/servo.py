@@ -44,7 +44,7 @@ class Servo:
         if value > self.pin_limits[1]: value = self.pin_limits[1]
         elif value < self.pin_limits[0]: value = self.pin_limits[0]
         value = -value if self.reverse else value
-        value += self.offset
+        value += self.offset * (1 if not self.reverse else -1)
         return value
 
     def _value_to_pwm(self) -> int:

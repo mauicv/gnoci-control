@@ -2,7 +2,7 @@ import smbus2 as smbus
 import time
 import struct
 import math
-
+import threading as th
 
 IMU_ADDR = 0x68
 I2C_MUX_ADDR_1 = 0x70
@@ -13,6 +13,8 @@ PWM_MUX_ADDR = 0x40
 PCA9685_LED0 = 0x06
 NUM_SERVOS = 10
 
+
+bus_lock = th.Lock()
 
 device_map = {
     I2C_MUX_ADDR_1: {
@@ -83,13 +85,15 @@ def write_servos(bus, data, freq):
         off = min(4095, round(pwm_us * ticks_per_us))
         byte_data += [on & 0xFF, on >> 8, off & 0xFF, off >> 8]
     chunk = 32  # 8 channels * 4 bytes
-    for i in range(0, len(byte_data), chunk):
-        reg = PCA9685_LED0 + (i // 4) * 4
-        bus.write_i2c_block_data(PWM_MUX_ADDR, reg, byte_data[i:i + chunk])
+    with bus_lock:
+        for i in range(0, len(byte_data), chunk):
+            reg = PCA9685_LED0 + (i // 4) * 4
+            bus.write_i2c_block_data(PWM_MUX_ADDR, reg, byte_data[i:i + chunk])
 
 def read_sensor_data(bus):
-    imu_data = bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14)
-    rot_enc_data, adc_data = read_muxes(bus)
+    with bus_lock:
+        imu_data = bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14)
+        rot_enc_data, adc_data = read_muxes(bus)
     return imu_data, rot_enc_data, adc_data
 
 def decode_imu(raw):
