@@ -57,3 +57,17 @@ class Servo:
         self._update_value = self.pid_controller(self._value)
         self._value += self._update_value
         return self._value_to_pwm()
+
+
+class DummyServo():
+    def __init__(self):
+        self.value = 0.0
+
+    def update_setpoint_delta(self, setpoint_delta: float):
+        self.value += setpoint_delta
+
+    def update_setpoint(self, setpoint: float):
+        self.value = setpoint
+
+    def get_pwm(self):
+        return self.value

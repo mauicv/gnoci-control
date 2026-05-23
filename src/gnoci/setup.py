@@ -1,5 +1,5 @@
 import time
-from gnoci.servo import Servo
+from gnoci.servo import Servo, DummyServo
 import smbus2 as smbus
 from gnoci.gnoci import Gnoci
 from gnoci.hardware import SensorReader
@@ -21,22 +21,22 @@ def setup_gnoci_control(
 
 
     servos: list[Servo] = [
-        Servo(name="left_lower_leg__foot",          pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.2, reverse=False, **generic_values), # [x]
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0), 
-        Servo(name="left_hip__upper_leg",           pin_limits=(-0.02, 0.02), init_value=0.0, offset=-0.3, reverse=True, **generic_values), # [x]
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0),
-        Servo(name="left_yoke__hip",                pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [ ]
-        Servo(name="head__left_yoke",               pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [ ]
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0),
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0),
-        Servo(name="head__right_yoke",              pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [ ]
-        Servo(name="right_yoke__hip",               pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [ ]
-        Servo(name="right_hip__upper_leg",          pin_limits=(-0.02, 0.02), init_value=0.0, offset=-0.3, reverse=False, **generic_values), # [x]
-        Servo(name="right_upper_leg__lower_leg",    pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.4, reverse=False, **generic_values), # [x]
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0), 
-        Servo(name="right_lower_leg__foot",         pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.2, reverse=True, **generic_values), # [x]
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0),
-        Servo(name="dummy",                         pin_limits=(-0.02, 0.02), init_value=0.0, offset=0.0),
+        Servo(name="left_lower_leg__foot",          pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.3, reverse=False, **generic_values), # [x]
+        DummyServo(),
+        Servo(name="left_hip__upper_leg",           pin_limits=(-0.6, 0.4), init_value=0.0, offset=-0.3, reverse=True, **generic_values), # [x]
+        Servo(name="left_upper_leg__lower_leg",     pin_limits=(-0.5, 0.5), init_value=0.0, offset=0.6, reverse=True, **generic_values), #  [x]
+        Servo(name="left_yoke__hip",                pin_limits=(-0.2, 0.3), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [x]
+        Servo(name="head__left_yoke",               pin_limits=(-0.4, 0.3), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [ ]
+        DummyServo(),
+        DummyServo(),
+        Servo(name="head__right_yoke",              pin_limits=(-0.4, 0.3), init_value=0.0, offset=0.0, reverse=True, **generic_values), # [ ]
+        Servo(name="right_yoke__hip",               pin_limits=(-0.2, 0.3), init_value=0.0, offset=0.0, reverse=False, **generic_values), # [x]
+        Servo(name="right_hip__upper_leg",          pin_limits=(-0.6, 0.4), init_value=0.0, offset=-0.3, reverse=False, **generic_values), # [x]
+        Servo(name="right_upper_leg__lower_leg",    pin_limits=(-0.5, 0.5), init_value=0.0, offset=0.6, reverse=False, **generic_values), # [x]
+        DummyServo(),
+        Servo(name="right_lower_leg__foot",         pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.3, reverse=True, **generic_values), # [x]
+        DummyServo(),
+        DummyServo(),
     ]
 
     bus = smbus.SMBus(1)

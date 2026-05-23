@@ -3,6 +3,7 @@ import os
 import numpy as np
 import time
 from gnoci.net_util.channel import Channel
+from gnoci.servo import DummyServo
 
 
 @click.command()
@@ -90,6 +91,8 @@ def run_checks(hz: int):
     gnoci = setup_gnoci_control(freq=hz)
 
     for servo in gnoci.servo_controller.servos:
+        if isinstance(servo, DummyServo):
+            continue
         print(f'range test servo: {servo.name}:')
         servo_initial_value = servo.value
         for value in np.linspace(-1, 1, 10):
