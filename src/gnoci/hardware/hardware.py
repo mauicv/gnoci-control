@@ -143,7 +143,7 @@ def test_adcs(bus):
 
 
 def test_mpu6050(bus):
-    bus.write_byte(IMU_ADDR, 0x6B, 0x00)
+    bus.write_byte_data(IMU_ADDR, 0x6B, 0x00)
     time.sleep(0.1)
     imu_data = bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14)
     print(f"IMU: {imu_data}")

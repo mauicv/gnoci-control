@@ -4,6 +4,15 @@ import numpy as np
 import time
 from gnoci.servo import DummyServo
 
+_has_i2c = os.path.exists('/dev/i2c-1')
+if _has_i2c:
+    print("using smbus")
+    from smbus2 import SMBus
+else:
+    print("using mocked bus")
+    from gnoci.hardware.mock_bus import MockedBus as SMBus
+
+
 def display(elapsed, imu_data, rot_enc_data, adc_data, flush=True):
     ax, ay, az, gx, gy, gz = imu_data
     imu_line = f"  IMU  | ax:{ax:+7.3f} ay:{ay:+7.3f} az:{az:+7.3f} gx:{gx:+7.1f} gy:{gy:+7.1f} gz:{gz:+7.1f}"
@@ -29,7 +38,11 @@ def test_control_hz(hz: int, limit=1000):
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
 
-    servo_controller, sensor_reader, policy = setup_gnoci_control(freq=hz)
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, freq=hz)
+    servo_controller = gnoci.servo_controller
+    sensor_reader = gnoci.sensor_reader
+    policy = gnoci.policy
     perf_times = []
     time.sleep(0.01)
 
@@ -60,7 +73,11 @@ def test_control_hz(hz: int, limit=1000):
 @click.option('--hz', type=int, default=100)
 def run_checks(hz: int):
     from gnoci.setup import setup_gnoci_control
-    servo_controller, sensor_reader, policy = setup_gnoci_control(freq=hz)
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, freq=hz)
+    servo_controller = gnoci.servo_controller
+    sensor_reader = gnoci.sensor_reader
+    policy = gnoci.policy
 
     for servo in servo_controller.servos:
         if isinstance(servo, DummyServo):
@@ -120,17 +137,18 @@ def detect_joint_range(servo, sensor_reader, joint_name: str):
 @click.option('--file_name', type=str, default='positioning_data.csv')
 def measure_positions(hz: int, joint_name: str, file_name: str):
     from gnoci.setup import setup_gnoci_control
-    servo_controller, sensor_reader, policy = setup_gnoci_control(freq=hz)
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, freq=hz)
 
     with open(file_name, 'w') as f:
         f.write('servo,index,center,lo,hi,range\n')
 
-    for servo in servo_controller.servos:
+    for servo in gnoci.servo_controller.servos:
         if isinstance(servo, DummyServo):
             continue
         if joint_name is not None and servo.name != joint_name:
             continue
         print(f'range test servo: {servo.name}:')
-        index, center, lo, hi = detect_joint_range(servo, sensor_reader, joint_name)
+        index, center, lo, hi = detect_joint_range(servo, gnoci.sensor_reader, joint_name)
         with open(file_name, 'a') as f:
             f.write(f'{servo.name},{index},{center},{lo},{hi},{hi - lo}\n')

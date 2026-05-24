@@ -4,6 +4,15 @@ import numpy as np
 import time
 from gnoci.net_util.channel import Channel
 
+_has_i2c = os.path.exists('/dev/i2c-1')
+if _has_i2c:
+    print("using smbus")
+    from smbus2 import SMBus
+else:
+    print("using mocked bus")
+    from gnoci.hardware.mock_bus import MockedBus as SMBus
+
+
 
 @click.command()
 @click.option('--debug/--no-debug', default=False)
@@ -28,14 +37,16 @@ def control_loop(hw_hz: int, ctl_hz: int, limit=None, kp=0.08, ki=0.0, kd=0.005)
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
-    servo_controller, sensor_reader, policy = setup_gnoci_control(freq=hw_hz, kp=kp, ki=ki, kd=kd)
+
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, freq=hw_hz, kp=kp, ki=ki, kd=kd)
 
     def _tick():
         time_start = time.perf_counter()
 
-        state = sensor_reader.read()
-        action = policy.predict(state)
-        servo_controller.update_setpoint_delta(action)
+        state = gnoci.sensor_reader.data
+        action = gnoci.policy.predict(state)
+        gnoci.servo_controller.update_setpoint_delta(action[0])
 
         elapsed = time.perf_counter() - time_start
         if elapsed > 1.0 / ctl_hz:
