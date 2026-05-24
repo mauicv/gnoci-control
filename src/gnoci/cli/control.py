@@ -39,13 +39,22 @@ def control_loop(hw_hz: int, ctl_hz: int, limit=None, kp=0.08, ki=0.0, kd=0.005)
     from gnoci.loop import Loop
 
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, freq=hw_hz, kp=kp, ki=ki, kd=kd)
+    gnoci = setup_gnoci_control(
+        bus=bus,
+        freq=hw_hz,
+        kp=kp,
+        ki=ki,
+        kd=kd
+    )
 
     def _tick():
         time_start = time.perf_counter()
 
         state = gnoci.sensor_reader.data
-        action = gnoci.policy.predict(state)
+        gnoci.memory.add_state(state)
+        observation = gnoci.memory.get_observation()
+        action = gnoci.policy.predict(observation)
+        gnoci.memory.add_action(action)
         gnoci.servo_controller.update_setpoint_delta(action[0])
 
         elapsed = time.perf_counter() - time_start

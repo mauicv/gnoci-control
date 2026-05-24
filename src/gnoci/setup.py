@@ -18,7 +18,7 @@ class Gnoci:
         self.policy = PolicyRunner(obs_dim=10+4+6+2)
         self.servo_controller = ServoController(bus=self.bus, freq=self.freq, kp=self.kp, ki=self.ki, kd=self.kd)
         self.sensor_reader = SensorReader(bus=self.bus, freq=self.freq)
-        self.memory = Memory(num_observations=3, num_actions=2)
+        self.memory = Memory(num_states=3, num_actions=2, action_dim=10, state_dim=10+4+6+2)
         time.sleep(0.01)
 
 
