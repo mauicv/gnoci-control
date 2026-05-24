@@ -10,7 +10,7 @@ def display(elapsed, imu_data, rot_enc_data, adc_data, flush=True):
     rot_line = f"  ROT  | " + " ".join(f"{v:5.3f}" if v is not None else "  N/A" for v in rot_enc_data)
     adc_line = f"  ADC  | " + " ".join(f"{'ON' if v else 'OFF':>5}" if v is not None else "  N/A" for v in adc_data)
     if elapsed is not None:
-        hz_line = f"  TIME | {elapsed:.1f}ms ({1000/elapsed:.0f} Hz)"
+        hz_line = f"  TIME | {elapsed:.1f}ms ({1/elapsed:.0f} Hz)"
     else:
         hz_line = "  TIME | N/A"
 
@@ -41,9 +41,10 @@ def test_control_hz(hz: int, limit=1000):
     for i in range(limit):
         start = time.perf_counter()
         sensor_reader._read_hardware()
+        sensor_reader.decode_hardware()
         policy.predict(np.ones(22))
         servo_controller.update_setpoint_delta([0]*10)
-        elapsed = time.perf_counter() - start
+        elapsed = (time.perf_counter() - start)
         perf_times.append(elapsed)
 
         display(elapsed, sensor_reader.imu_data, sensor_reader.rot_enc_data, sensor_reader.adc_data)
@@ -61,7 +62,7 @@ def run_checks(hz: int):
     from gnoci.setup import setup_gnoci_control
     servo_controller, sensor_reader, policy = setup_gnoci_control(freq=hz)
 
-    for servo in gnoci.servo_controller.servos:
+    for servo in servo_controller.servos:
         if isinstance(servo, DummyServo):
             continue
         print(f'range test servo: {servo.name}:')
@@ -69,52 +70,67 @@ def run_checks(hz: int):
         for value in np.linspace(-1, 1, 10):
             servo.update_setpoint(value)
             time.sleep(0.1)
-            display(
-                elapsed=None,
-                imu_data=sensor_reader.imu_data,
-                rot_enc_data=sensor_reader.rot_enc_data,
-                adc_data=sensor_reader.adc_data
-            )
         servo.update_setpoint(servo_initial_value)
         time.sleep(0.01)
         print(f'value: {servo_initial_value}, pwm: {servo.get_pwm()}')
 
 
+def detect_joint_range(servo, sensor_reader, joint_name: str):
+    r_d = []
+    servo.update_setpoint(0.0)
+    time.sleep(1)
+    sensor_reader._read_hardware()
+    sensor_reader.decode_hardware()
+    r_d.append(sensor_reader.rot_enc_data)
+    time.sleep(1)
+
+    servo.update_setpoint(-1)
+    time.sleep(1)
+    sensor_reader._read_hardware()
+    sensor_reader.decode_hardware()
+    r_d.append(sensor_reader.rot_enc_data)
+    time.sleep(1)
+
+    servo.update_setpoint(1)
+    time.sleep(1)
+    sensor_reader._read_hardware()
+    sensor_reader.decode_hardware()
+    r_d.append(sensor_reader.rot_enc_data)
+    time.sleep(1)
+
+    max_diff = 0
+    for i,(a,b,c) in enumerate(zip(r_d[0], r_d[1], r_d[2])):
+        diff = abs(b - c)
+        if diff > max_diff:
+            max_diff = diff
+            max_diff_index = i
+
+    print(f'Detected {joint_name} at index {max_diff_index}')
+    center, lo, hi = r_d[0][max_diff_index], r_d[1][max_diff_index], r_d[2][max_diff_index]
+    print(f'center: {center:5.3f}, lo: {lo:5.3f}, hi: {hi:5.3f}')
+    print(f'lo - center: {lo - center:5.3f}, center - hi: {center - hi:5.3f}')
+    print(f'range: {hi - lo:5.3f}')
+
+    return max_diff_index, center, lo, hi
+
 
 @click.command()
 @click.option('--hz', type=int, default=100)
 @click.option('--joint-name', type=str, default=None)
-def measure_positions(hz: int, joint_name: str):
+@click.option('--file_name', type=str, default='positioning_data.csv')
+def measure_positions(hz: int, joint_name: str, file_name: str):
     from gnoci.setup import setup_gnoci_control
     servo_controller, sensor_reader, policy = setup_gnoci_control(freq=hz)
 
-    for servo in gnoci.servo_controller.servos:
-        if servo.name != joint_name:
+    with open(file_name, 'w') as f:
+        f.write('servo,index,center,lo,hi,range\n')
+
+    for servo in servo_controller.servos:
+        if isinstance(servo, DummyServo):
+            continue
+        if joint_name is not None and servo.name != joint_name:
             continue
         print(f'range test servo: {servo.name}:')
-        servo.update_setpoint(0.0)
-        display(
-            elapsed=None,
-            imu_data=sensor_reader.imu_data,
-            rot_enc_data=sensor_reader.rot_enc_data,
-            adc_data=sensor_reader.adc_data
-            flush=False
-        )
-
-        servo.update_setpoint(-1)
-        display(
-            elapsed=None,
-            imu_data=sensor_reader.imu_data,
-            rot_enc_data=sensor_reader.rot_enc_data,
-            adc_data=sensor_reader.adc_data
-            flush=False
-        )
-
-        servo.update_setpoint(1)
-        display(
-            elapsed=None,
-            imu_data=sensor_reader.imu_data,
-            rot_enc_data=sensor_reader.rot_enc_data,
-            adc_data=sensor_reader.adc_data
-            flush=False
-        )
+        index, center, lo, hi = detect_joint_range(servo, sensor_reader, joint_name)
+        with open(file_name, 'a') as f:
+            f.write(f'{servo.name},{index},{center},{lo},{hi},{hi - lo}\n')

@@ -1,7 +1,6 @@
 import time
 from gnoci.servo import Servo, DummyServo
 import smbus2 as smbus
-from gnoci.gnoci import Gnoci
 from gnoci.hardware import SensorReader
 from gnoci.hardware import ServoController
 from gnoci.predict import PolicyRunner
