@@ -21,9 +21,21 @@ try:
         test_control_hz
     )
     cli.add_command(start)
-    cli.add_command(run_checks)
     cli.add_command(control_loop)
+except ImportError as error:
+    logger.error(error)
+    raise error
+
+
+try:
+    from gnoci.cli.configure import (
+        run_checks,
+        test_control_hz,
+        measure_positions
+    )
+    cli.add_command(run_checks)
     cli.add_command(test_control_hz)
+    cli.add_command(measure_positions)
 except ImportError as error:
     logger.error(error)
     raise error

@@ -8,7 +8,8 @@ from gnoci.hardware.hardware import (
     decode_angle,
     decode_foot_contact,
     init_mpu6050,
-    init_adcs
+    init_adcs,
+    test_all
 )
 
 class SensorReader:
@@ -27,6 +28,8 @@ class SensorReader:
             init_adcs(bus)
         except OSError as e:
             print(f"Error initializing ADCs: {e}")
+
+        test_all(bus)
 
         # 10 for rotencs, 4 for adcs, 3 for acc, 3 for gyro, 
         self.imu_raw = [0] * 6

@@ -133,6 +133,30 @@ def test_rot_encs(bus):
         bus.write_byte(mux_addr, 0)
 
 
+def test_adcs(bus):
+    for mux_addr in [I2C_MUX_ADDR_1, I2C_MUX_ADDR_2]:
+        for channel in device_map[mux_addr]["adcs"]:
+            bus.write_byte(mux_addr, 1 << channel)
+            dev_data = _read(bus, A2D_ADDR, 0x00, 2)
+            print(f"{mux_addr:02x}:{channel:02x}: {dev_data}")
+        bus.write_byte(mux_addr, 0)
+
+
+def test_mpu6050(bus):
+    bus.write_byte(IMU_ADDR, 0x6B, 0x00)
+    time.sleep(0.1)
+    imu_data = bus.read_i2c_block_data(IMU_ADDR, 0x3B, 14)
+    print(f"IMU: {imu_data}")
+    ax, ay, az, gx, gy, gz = decode_imu(imu_data)
+    print(f"ax: {ax}, ay: {ay}, az: {az}, gx: {gx}, gy: {gy}, gz: {gz}")
+
+
+def test_all(bus):
+    test_rot_encs(bus)
+    test_adcs(bus)
+    test_mpu6050(bus)
+
+
 if __name__ == "__main__":
     import os
     bus = smbus.SMBus(1)

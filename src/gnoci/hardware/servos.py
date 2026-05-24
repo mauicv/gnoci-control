@@ -1,4 +1,4 @@
-from gnoci.servo import Servo
+from gnoci.servo import Servo, DummyServo
 from gnoci.loop import Loop
 import time
 from gnoci.hardware.hardware import init_pca9685
@@ -9,13 +9,43 @@ class ServoController:
     def __init__(
             self,
             bus,
-            servos: list[Servo],
-            freq=100,
-            **kwargs):
+            freq: int = 100,
+            kp: float = 0.08,
+            ki: float = 0.0,
+            kd: float = 0.005,
+            **kwargs
+        ):
         super().__init__(**kwargs)
+        generic_values = {
+            "kp": kp,
+            "ki": ki,
+            "kd": kd,
+            "freq": freq,
+        }
+
+        # TODO: asymetric in left_yoke__hip and right_yoke__hip reverse-True/False?
+        self.servos: list[Servo] = [
+            Servo(name="left_lower_leg__foot",          pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.3, reverse=False, **generic_values),
+            DummyServo(),
+            Servo(name="left_hip__upper_leg",           pin_limits=(-0.6, 0.4), init_value=0.0, offset=-0.3, reverse=True, **generic_values),
+            Servo(name="left_upper_leg__lower_leg",     pin_limits=(-0.5, 0.5), init_value=0.0, offset=0.6, reverse=True, **generic_values),
+            Servo(name="left_yoke__hip",                pin_limits=(-0.2, 0.3), init_value=0.0, offset=0.0, reverse=False, **generic_values),
+            Servo(name="head__left_yoke",               pin_limits=(-0.4, 0.3), init_value=0.0, offset=0.0, reverse=False, **generic_values),
+            DummyServo(),
+            DummyServo(),
+            Servo(name="head__right_yoke",              pin_limits=(-0.4, 0.3), init_value=0.0, offset=0.0, reverse=True, **generic_values),
+            Servo(name="right_yoke__hip",               pin_limits=(-0.2, 0.3), init_value=0.0, offset=0.0, reverse=False, **generic_values),
+            Servo(name="right_hip__upper_leg",          pin_limits=(-0.6, 0.4), init_value=0.0, offset=-0.3, reverse=False, **generic_values),
+            Servo(name="right_upper_leg__lower_leg",    pin_limits=(-0.5, 0.5), init_value=0.0, offset=0.6, reverse=False, **generic_values),
+            DummyServo(),
+            Servo(name="right_lower_leg__foot",         pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.3, reverse=True, **generic_values),
+            DummyServo(),
+            DummyServo(),
+        ]
+        self.servo_map = [0,2,3,4,5,8,9,10,11,13]
+        
         self.bus = bus
         self.freq = freq
-        self.servos = servos
 
         init_pca9685(bus, freq=freq)
         self.servo_update_loop = Loop(
@@ -26,13 +56,13 @@ class ServoController:
         self.last_servo_set_ts = time.time()
 
     def update_setpoint_delta(self, values: list[float]):
-        for servo, value in zip(self.servos, values):
-            servo.update_setpoint_delta(value)
+        for servo_idx, value in zip(self.servo_map, values):
+            self.servos[servo_idx].update_setpoint_delta(value)
         self.last_servo_set_ts = time.time()
 
     def update_setpoint(self, values: list[float]):
-        for servo, value in zip(self.servos, values):
-            servo.update_setpoint(value)
+        for servo_idx, value in zip(self.servo_map, values):
+            self.servos[servo_idx].update_setpoint(value)
         self.last_servo_set_ts = time.time()
 
     def _write_servos(self):
