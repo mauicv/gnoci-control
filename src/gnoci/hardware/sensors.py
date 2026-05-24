@@ -48,8 +48,8 @@ class SensorReader:
         self.roll = 0
 
         self._hw_read_ts_new = time.perf_counter()
-        self._hw_read_ts_old = time.perf_counter() - 1.0 / self.freq
-        self._hw_read_dt = None
+        self._hw_read_ts_old = self._hw_read_ts_new - 1.0 / self.freq
+        self._hw_read_dt = 1.0 / self.freq
         self.hardware_loop = Loop(
             hz=self.freq,
             func=self._read_hardware
@@ -86,6 +86,8 @@ class SensorReader:
         decoded = [decode_angle(item) for item in self.rot_enc_raw]
         self.rot_enc_data = [self._unwrap_angle(i, a) for i, a in enumerate(decoded)]
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
+
+    def update_filters(self):
         self.c_filter.update(self.imu_data[:3], self.imu_data[3:])
         self.pitch = self.c_filter.pitch
         self.roll = self.c_filter.roll
@@ -99,6 +101,8 @@ class SensorReader:
     @property
     def data(self):
         self.decode_hardware()
+        self.update_filters()
+        self.derive_angular_velocities()
         return [
             *self.rot_enc_data,
             *self.angular_velocities,
