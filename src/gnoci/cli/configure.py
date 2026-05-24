@@ -3,6 +3,7 @@ import os
 import numpy as np
 import time
 from gnoci.servo import DummyServo
+from gnoci.config import MODEL_INPUT_DIM
 
 _has_i2c = os.path.exists('/dev/i2c-1')
 if _has_i2c:
@@ -31,15 +32,14 @@ def display(elapsed, imu_data, rot_enc_data, adc_data, flush=True):
         print("\n\n\n\n")
 
 @click.command()
-@click.option('--hz', type=int, default=100)
 @click.option('--limit', type=int, default=1000)
-def test_control_hz(hz: int, limit=1000):
+def test_control_hz(limit=1000):
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
 
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, freq=hz)
+    gnoci = setup_gnoci_control(bus=bus)
     servo_controller = gnoci.servo_controller
     sensor_reader = gnoci.sensor_reader
     policy = gnoci.policy
@@ -55,7 +55,7 @@ def test_control_hz(hz: int, limit=1000):
         start = time.perf_counter()
         sensor_reader._read_hardware()
         sensor_reader.decode_hardware()
-        policy.predict(np.ones(22))
+        policy.predict(np.ones(MODEL_INPUT_DIM))
         servo_controller.update_setpoint_delta([0]*10)
         elapsed = (time.perf_counter() - start)
         perf_times.append(elapsed)
@@ -70,11 +70,10 @@ def test_control_hz(hz: int, limit=1000):
 
 
 @click.command()
-@click.option('--hz', type=int, default=100)
-def run_checks(hz: int):
+def run_checks():
     from gnoci.setup import setup_gnoci_control
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, freq=hz)
+    gnoci = setup_gnoci_control(bus=bus)
     servo_controller = gnoci.servo_controller
     sensor_reader = gnoci.sensor_reader
     policy = gnoci.policy
@@ -132,13 +131,12 @@ def detect_joint_range(servo, sensor_reader, joint_name: str):
 
 
 @click.command()
-@click.option('--hz', type=int, default=100)
 @click.option('--joint-name', type=str, default=None)
-@click.option('--file_name', type=str, default='positioning_data.csv')
-def measure_positions(hz: int, joint_name: str, file_name: str):
+@click.option('--file-name', type=str, default='positioning_data.csv')
+def measure_positions(joint_name: str, file_name: str):
     from gnoci.setup import setup_gnoci_control
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, freq=hz)
+    gnoci = setup_gnoci_control(bus=bus)
 
     with open(file_name, 'w') as f:
         f.write('servo,index,center,lo,hi,range\n')
@@ -152,3 +150,17 @@ def measure_positions(hz: int, joint_name: str, file_name: str):
         index, center, lo, hi = detect_joint_range(servo, gnoci.sensor_reader, joint_name)
         with open(file_name, 'a') as f:
             f.write(f'{servo.name},{index},{center},{lo},{hi},{hi - lo}\n')
+
+
+@click.command()
+def test_hardware():
+    from gnoci.hardware.hardware import (
+        init_mpu6050,
+        init_adcs,
+        test_all
+    )
+    bus = SMBus(1)
+    init_mpu6050(bus)
+    init_adcs(bus)
+    time.sleep(0.01)
+    test_all(bus)

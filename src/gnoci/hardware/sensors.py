@@ -29,8 +29,6 @@ class SensorReader:
         except OSError as e:
             print(f"Error initializing ADCs: {e}")
 
-        test_all(bus)
-
         self.imu_raw = [0] * 6
         self.rot_enc_raw = [0] * 10
         self.adc_raw = [0] * 4

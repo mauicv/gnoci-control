@@ -45,6 +45,6 @@ def list_experiments():
     gcs = GCS_Interface(
         credentials='gnoci-497019-ecf9e3fbc49e.json',
         bucket='gnoci',
-        experiment_name=experiment_name
+        experiment_name=None
     )
     print(gcs.list_experiments())
