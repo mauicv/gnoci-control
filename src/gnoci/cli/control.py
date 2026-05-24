@@ -27,25 +27,15 @@ def start(debug, host, port, freq):
 
 
 @click.command()
-@click.option('--hw-hz', type=int, default=100)
 @click.option('--ctl-hz', type=int, default=80)
 @click.option('--limit', type=int, default=None)
-@click.option('--kp', type=float, default=0.08)
-@click.option('--ki', type=float, default=0.0)
-@click.option('--kd', type=float, default=0.005)
-def control_loop(hw_hz: int, ctl_hz: int, limit=None, kp=0.08, ki=0.0, kd=0.005):
+def control_loop(ctl_hz: int, limit=None):
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
 
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(
-        bus=bus,
-        freq=hw_hz,
-        kp=kp,
-        ki=ki,
-        kd=kd
-    )
+    gnoci = setup_gnoci_control(bus=bus)
 
     def _tick():
         time_start = time.perf_counter()
@@ -54,7 +44,7 @@ def control_loop(hw_hz: int, ctl_hz: int, limit=None, kp=0.08, ki=0.0, kd=0.005)
         gnoci.memory.add_state(state)
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
-        gnoci.memory.add_action(action)
+        gnoci.memory.add_action(action[0])
         gnoci.servo_controller.update_setpoint_delta(action[0])
 
         elapsed = time.perf_counter() - time_start

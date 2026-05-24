@@ -18,8 +18,14 @@ if __name__ == "__main__":
         format='%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s'
     )
 
+    observation_dim = (10+10+4+6+2)
+    action_dim = 10
+    obs_stack_dim = 3
+    action_stack_dim = 2
+    model_input_dim = observation_dim * obs_stack_dim + action_dim * action_stack_dim
+
     encoder = MLPEncoder(
-        input_dim=10+4+6+2,
+        input_dim=model_input_dim,
         output_dim=512,
     )
 
@@ -42,5 +48,5 @@ if __name__ == "__main__":
         experiment_name='onnx-wf'
     )
 
-    gcs.model.upload_model(encoder_actor, torch.randn(1, 10+4+6+2))
+    gcs.model.upload_model(encoder_actor, torch.randn(1, model_input_dim))
     gcs.model.download_model()

@@ -37,15 +37,21 @@ class SensorReader:
 
         self.imu_data = [0] * 6
         self.rot_enc_data = [0] * 10
+        self.prev_rot_enc_data = [0] * 10
         self.adc_data = [0] * 4
 
         # Cumulative unwrapped angles
         self.rot_enc_cumulative = [0.0] * 10
         self.rot_enc_prev = [None] * 10
 
+        self.angular_velocities = [0.0] * 10
+
         self.pitch = 0
         self.roll = 0
 
+        self._hw_read_ts_new = time.perf_counter()
+        self._hw_read_ts_old = time.perf_counter() - 1.0 / self.freq
+        self._hw_read_dt = None
         self.hardware_loop = Loop(
             hz=self.freq,
             func=self._read_hardware
@@ -55,6 +61,9 @@ class SensorReader:
     def _read_hardware(self):
         try:
             self.imu_raw, self.rot_enc_raw, self.adc_raw = read_sensor_data(self.bus)
+            self._hw_read_ts_old = self._hw_read_ts_new
+            self._hw_read_ts_new = time.perf_counter()
+            self._hw_read_dt = self._hw_read_ts_new - self._hw_read_ts_old
         except OSError as e:
             print(f"Error reading hardware: {e}")
 
@@ -83,13 +92,20 @@ class SensorReader:
         self.pitch = self.c_filter.pitch
         self.roll = self.c_filter.roll
 
+    def derive_angular_velocities(self):
+        self.angular_velocities = [
+            (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
+        ]
+        self.prev_rot_enc_data = self.rot_enc_data
+
     @property
     def data(self):
         self.decode_hardware()
         return [
-            *self.imu_data,
             *self.rot_enc_data,
+            *self.angular_velocities,
             *self.adc_data,
+            *self.imu_data,
             self.roll,
             self.pitch,
         ]
