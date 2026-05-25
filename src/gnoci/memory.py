@@ -23,5 +23,8 @@ class Memory:
 
     def get_observation(self):
         obs = np.concatenate(self.states)
-        actions = np.concatenate(self.actions)
-        return np.concatenate((obs, actions))
+        if self.num_actions > 0:
+            actions = np.concatenate(self.actions)
+            return np.concatenate((obs, actions))
+        else:
+            return obs

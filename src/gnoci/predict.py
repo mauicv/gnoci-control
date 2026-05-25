@@ -19,7 +19,7 @@ class PolicyRunner:
             model_path = _find_local_model()
         self.session = None
         self.load_model(model_path)
-        dummy = np.zeros((1, obs_dim), dtype=np.float32)
+        dummy = np.zeros((obs_dim, ), dtype=np.float32)
         self.session.run(None, {self.input_name: dummy})
 
     def load_model(self, path):
@@ -30,6 +30,6 @@ class PolicyRunner:
         self.input_name = self.session.get_inputs()[0].name
 
     def predict(self, obs):
-        obs = np.array(obs, dtype=np.float32).reshape(1, -1)
+        obs = np.array(obs, dtype=np.float32)
         result = self.session.run(None, {self.input_name: obs})
-        return result[0][0]
+        return result[0]

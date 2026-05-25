@@ -10,7 +10,7 @@ from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STAC
 
 
 class Gnoci:
-    def __init__(self, bus: smbus.SMBus, ):
+    def __init__(self, bus: smbus.SMBus):
         self.bus = bus
         self.policy = PolicyRunner(obs_dim=MODEL_INPUT_DIM)
         self.servo_controller = ServoController(bus=self.bus, freq=FREQ, kp=KP, ki=KI, kd=KD)
