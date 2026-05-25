@@ -13,23 +13,12 @@ else:
     from gnoci.hardware.mock_bus import MockedBus as SMBus
 
 
-
 @click.command()
-@click.option('--debug/--no-debug', default=False)
 @click.option('--host', type=str, default=None)
 @click.option('--port', type=int, default=8000)
-@click.option('--freq', type=int, default=100)
-def start(debug, host, port, freq):
-    pass
-    # channel = Channel(host=host, port=port)
-    # channel.serve(gnoci.handle_message)
-    # print("Gnoci control server started")
-
-
-@click.command()
 @click.option('--ctl-hz', type=int, default=80)
 @click.option('--limit', type=int, default=None)
-def control_loop(ctl_hz: int, limit=None):
+def start(host, port, ctl_hz: int, limit=None):
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
@@ -45,6 +34,7 @@ def control_loop(ctl_hz: int, limit=None):
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
         gnoci.memory.add_action(action[0])
+        action = np.zeros((1, 10)) # TODO: remove this line
         gnoci.servo_controller.update_setpoint_delta(action[0])
 
         elapsed = time.perf_counter() - time_start

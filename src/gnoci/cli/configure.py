@@ -50,13 +50,14 @@ def test_control_hz(limit=1000):
     servo_controller.deinit()
 
     print("\n\n\n\n")
-    
+    servo_controller.update_setpoint([0]*10)
+
     for i in range(limit):
         start = time.perf_counter()
         sensor_reader._read_hardware()
         sensor_reader.decode_hardware()
         policy.predict(np.ones(MODEL_INPUT_DIM))
-        servo_controller.update_setpoint_delta([0]*10)
+        servo_controller._write_servos()
         elapsed = (time.perf_counter() - start)
         perf_times.append(elapsed)
 
