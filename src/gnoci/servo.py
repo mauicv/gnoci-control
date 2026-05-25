@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from simple_pid import PID
+from gnoci.filters.low_pass import LowPassFilter
 
 SERVO_PWM_THRESHOLD_MIN: int = 500
 SERVO_PWM_THRESHOLD_MAX: int = 2500
@@ -20,6 +21,9 @@ class Servo:
     offset: float = 0.0
     freq: int = 100
 
+    low_pass_filter: LowPassFilter = None
+
+
     def __post_init__(self):
         self.pid_controller = PID(
             self.kp, self.ki, self.kd,
@@ -28,9 +32,12 @@ class Servo:
             output_limits=(-0.05, 0.05),  # max 5 units/tick = 5 units/sec at 100Hz
             sample_time=1.0 / self.freq,
         )
+        self.low_pass_filter = LowPassFilter(alpha=0.4)
+        self.low_pass_filter.reset()
 
     def update_setpoint_delta(self, setpoint_delta: float):
-        updated_setpoint = self.pid_controller.setpoint + setpoint_delta
+        self.low_pass_filter.update(setpoint_delta)
+        updated_setpoint = self.pid_controller.setpoint + self.low_pass_filter.value
         if updated_setpoint > self.pin_limits[1]: updated_setpoint = self.pin_limits[1]
         elif updated_setpoint < self.pin_limits[0]: updated_setpoint = self.pin_limits[0]
         self.pid_controller.setpoint = updated_setpoint
