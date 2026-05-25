@@ -24,6 +24,7 @@ class ServoController:
         }
 
         # TODO: asymetric in left_yoke__hip and right_yoke__hip reverse-True/False?
+        # TODO: align servos with ordering in README.md
         self.servos: list[Servo] = [
             Servo(name="left_lower_leg__foot",          pin_limits=(-0.5, 0.5), init_value=0.0, offset=-0.3, reverse=False, **generic_values),
             DummyServo(),
@@ -42,8 +43,8 @@ class ServoController:
             DummyServo(),
             DummyServo(),
         ]
-        self.servo_map = [0,2,3,4,5,8,9,10,11,13]
-        
+        self.servo_map = [5,4,2,3,0,8,9,10,11,13]
+
         self.bus = bus
         self.freq = freq
 

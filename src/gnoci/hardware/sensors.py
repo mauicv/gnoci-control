@@ -13,6 +13,10 @@ from gnoci.hardware.hardware import (
 )
 
 class SensorReader:
+    positioning_data = {
+        
+    }
+
     def __init__(
             self,
             bus,
