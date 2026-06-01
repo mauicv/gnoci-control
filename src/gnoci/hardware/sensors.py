@@ -11,11 +11,14 @@ from gnoci.hardware.hardware import (
     init_adcs,
     test_all
 )
+from dataclasses import dataclass
+import json
 
 @dataclass
-class Sensor:
+class SensorConfig:
     name: str
     index: int
+    return_index: int
     center: float
     lo: float
     hi: float
@@ -23,23 +26,27 @@ class Sensor:
 
     def __post_init__(self):
         self.range = self.hi - self.lo
+        assert self.index == self.return_index
+
+with open('positioning_data.json', 'r') as f:
+    rot_enc_sensor_configs_data = json.load(f)
 
 
 class SensorReader:
     # left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
     sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
-    positioning_data = {
-        
-    }
+    rot_enc_sensor_configs = [SensorConfig(**sensor) for sensor in rot_enc_sensor_configs_data]
 
     def __init__(
             self,
             bus,
             freq=100,
+            center_angles=True,
             **kwargs
         ):
         super().__init__(**kwargs)
         self.freq = freq
+        self.center_angles = center_angles
         self.c_filter = ComplementaryFilter(alpha=0.95)
         self.bus = bus
         init_mpu6050(bus)
@@ -101,10 +108,18 @@ class SensorReader:
         self.rot_enc_prev[i] = raw_angle
         return self.rot_enc_cumulative[i]
 
+    def _center_angle(self, i, raw_angle):
+        if not self.center_angles:
+            return raw_angle
+        sensor_config = self.rot_enc_sensor_configs[i]
+        centered_angle = raw_angle - sensor_config.center
+        return centered_angle
+
     def decode_hardware(self):
         self.imu_data = decode_imu(self.imu_raw)
         decoded = [decode_angle(item) for item in self.rot_enc_raw]
         self.rot_enc_data = [self._unwrap_angle(i, a) for i, a in enumerate(decoded)]
+        self.rot_enc_data = [self._center_angle(i, a) for i, a in enumerate(self.rot_enc_data)]
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
 
     def update_filters(self):

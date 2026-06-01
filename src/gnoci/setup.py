@@ -10,11 +10,11 @@ from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STAC
 
 
 class Gnoci:
-    def __init__(self, bus: smbus.SMBus):
+    def __init__(self, bus: smbus.SMBus, center_angles: bool = True):
         self.bus = bus
         self.policy = PolicyRunner(obs_dim=MODEL_INPUT_DIM)
         self.servo_controller = ServoController(bus=self.bus, freq=FREQ, kp=KP, ki=KI, kd=KD)
-        self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ)
+        self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ, center_angles=center_angles)
         self.memory = Memory(
             num_states=OBS_STACK_DIM,
             num_actions=ACTION_STACK_DIM,
@@ -25,6 +25,7 @@ class Gnoci:
 
 
 def setup_gnoci_control(
-    bus: smbus.SMBus
+    bus: smbus.SMBus,
+    center_angles: bool = True
 ):
-    return Gnoci(bus=bus)
+    return Gnoci(bus=bus, center_angles=center_angles)

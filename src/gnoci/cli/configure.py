@@ -4,6 +4,7 @@ import numpy as np
 import time
 from gnoci.servo import DummyServo
 from gnoci.config import MODEL_INPUT_DIM
+import json
 
 _has_i2c = os.path.exists('/dev/i2c-1')
 if _has_i2c:
@@ -136,11 +137,12 @@ def detect_joint_range(servo, sensor_reader, joint_name: str):
 
 @click.command()
 @click.option('--joint-name', type=str, default=None)
-@click.option('--file-name', type=str, default='positioning_data.csv')
-def measure_positions(joint_name: str, file_name: str):
+@click.option('--file-name', type=str, default='positioning_data.json')
+@click.option('--center-angles', type=bool, default=False)
+def measure_positions(joint_name: str, file_name: str, center_angles: bool):
     from gnoci.setup import setup_gnoci_control
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus)
+    gnoci = setup_gnoci_control(bus=bus, center_angles=center_angles)
 
     count = 0
     positioning_data = []
@@ -151,7 +153,6 @@ def measure_positions(joint_name: str, file_name: str):
             continue
         print(f'range test servo: {servo.name}:')
         index, center, lo, hi = detect_joint_range(servo, gnoci.sensor_reader, joint_name)
-        count += 1
         positioning_data.append({
             "name": servo.name,
             "return_index": count,
@@ -161,8 +162,9 @@ def measure_positions(joint_name: str, file_name: str):
             "hi": hi,
             "range": hi - lo,
         })
+        count += 1
     with open(file_name, 'w') as f:
-        json.dump(positioning_data, f)
+        json.dump(positioning_data, f, indent=4)
 
 
 @click.command()
