@@ -142,18 +142,27 @@ def measure_positions(joint_name: str, file_name: str):
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus)
 
-    with open(file_name, 'w') as f:
-        f.write('servo,index,center,lo,hi,range\n')
-
-    for servo in gnoci.servo_controller.servos:
+    count = 0
+    positioning_data = []
+    for servo in gnoci.servo_controller.iter_servos():
         if isinstance(servo, DummyServo):
             continue
         if joint_name is not None and servo.name != joint_name:
             continue
         print(f'range test servo: {servo.name}:')
         index, center, lo, hi = detect_joint_range(servo, gnoci.sensor_reader, joint_name)
-        with open(file_name, 'a') as f:
-            f.write(f'{servo.name},{index},{center},{lo},{hi},{hi - lo}\n')
+        count += 1
+        positioning_data.append({
+            "name": servo.name,
+            "return_index": count,
+            "index": index,
+            "center": center,
+            "lo": lo,
+            "hi": hi,
+            "range": hi - lo,
+        })
+    with open(file_name, 'w') as f:
+        json.dump(positioning_data, f)
 
 
 @click.command()

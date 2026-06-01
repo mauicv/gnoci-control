@@ -27,3 +27,4 @@
 │ 9     │ right_lower_leg__foot      │
 └───────┴────────────────────────────┘
 
+left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot

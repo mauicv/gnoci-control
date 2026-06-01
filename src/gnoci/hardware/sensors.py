@@ -12,7 +12,22 @@ from gnoci.hardware.hardware import (
     test_all
 )
 
+@dataclass
+class Sensor:
+    name: str
+    index: int
+    center: float
+    lo: float
+    hi: float
+    range: float
+
+    def __post_init__(self):
+        self.range = self.hi - self.lo
+
+
 class SensorReader:
+    # left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
+    sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
     positioning_data = {
         
     }
@@ -63,6 +78,7 @@ class SensorReader:
     def _read_hardware(self):
         try:
             self.imu_raw, self.rot_enc_raw, self.adc_raw = read_sensor_data(self.bus)
+            self.rot_enc_raw = [self.rot_enc_raw[i] for i in self.sensor_map] # reorder
             self._hw_read_ts_old = self._hw_read_ts_new
             self._hw_read_ts_new = time.perf_counter()
             self._hw_read_dt = self._hw_read_ts_new - self._hw_read_ts_old

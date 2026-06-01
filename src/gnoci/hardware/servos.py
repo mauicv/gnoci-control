@@ -72,3 +72,7 @@ class ServoController:
 
     def deinit(self):
         self.servo_update_loop.stop()
+
+    def iter_servos(self):
+        for i in range(10):
+            yield self.servos[self.servo_map[i]]
