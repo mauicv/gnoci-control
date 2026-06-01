@@ -115,6 +115,9 @@ def detect_joint_range(servo, sensor_reader, joint_name: str):
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
+    servo.update_setpoint(0.0)
+    time.sleep(1)
+
     max_diff = 0
     for i,(a,b,c) in enumerate(zip(r_d[0], r_d[1], r_d[2])):
         diff = abs(b - c)
