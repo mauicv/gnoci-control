@@ -108,7 +108,7 @@ def decode_imu(raw):
 def decode_angle(raw):
     if raw is None:
         return None
-    return (((raw[0] & 0x0F) << 8) | raw[1]) / 4095  # 0-4095
+    return (((raw[0] & 0x0F) << 8) | raw[1]) / 4095 * 2 - 1  # -1 to 1
 
 def decode_foot_contact(raw):
     if raw is None:

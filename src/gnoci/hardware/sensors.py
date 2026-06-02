@@ -100,10 +100,10 @@ class SensorReader:
             return raw_angle
 
         diff = raw_angle - self.rot_enc_prev[i]
-        if diff > 0.5:
-            diff -= 1.0
-        elif diff < -0.5:
-            diff += 1.0
+        if diff > 1.0:
+            diff -= 2.0
+        elif diff < -1.0:
+            diff += 2.0
 
         self.rot_enc_cumulative[i] += diff
         self.rot_enc_prev[i] = raw_angle
