@@ -179,3 +179,70 @@ def test_hardware():
     init_adcs(bus)
     time.sleep(0.01)
     test_all(bus)
+
+
+def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, action: float):
+    try:
+        with open(file_name, 'r') as f:
+            response_data = json.load(f)
+    except FileNotFoundError:
+        response_data = {joint_name: {
+            "action": action,
+            "angular_pos": [],
+            "angular_vel": [],
+            "time": [],
+        }}
+
+    for servo in gnoci.servo_controller.iter_servos():
+        if isinstance(servo, DummyServo):
+            continue
+        if joint_name is not None and servo.name != joint_name:
+            continue
+        print(f'recording response for servo: {servo.name}:')
+        index = gnoci.sensor_reader.sensor_index_from_name(servo.name)
+
+        for i in range(100):
+            time_start = time.perf_counter()
+            servo.update_setpoint_delta(action)
+            state = gnoci.sensor_reader.data
+
+            response_data[joint_name]["angular_pos"].append(state[index])
+            response_data[joint_name]["angular_vel"].append(state[index + 10])
+            response_data[joint_name]["time"].append(time.perf_counter())
+
+            elapsed = time.perf_counter() - time_start
+            if elapsed < 1.0 / ctl_hz:
+                time.sleep(1.0 / ctl_hz - elapsed)
+            else:
+                print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
+
+        servo.update_setpoint(0)
+        time.sleep(0.5)
+
+    with open(file_name, 'w') as f:
+        json.dump(response_data, f, indent=4)
+
+
+@click.command()
+@click.option('--file-name', type=str, default='response_data.json')
+@click.option('--center-angles', type=bool, default=False)
+@click.option('--ctl-hz', type=int, default=CONTROL_HZ)
+def measure_response(joint_name: str, file_name: str, center_angles: bool, ctl_hz: int):
+    from gnoci.setup import setup_gnoci_control
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, center_angles=center_angles, control_hz=ctl_hz)
+
+    for action in [-1, 1]:
+        for joint_name in [
+                "head__left_yoke",
+                "left_yoke__hip",
+                "left_hip__upper_leg",
+                "left_upper_leg__lower_leg",
+                "left_lower_leg__foot",
+                "head__right_yoke",
+                "right_yoke__hip",
+                "right_hip__upper_leg",
+                "right_upper_leg__lower_leg",
+                "right_lower_leg__foot",
+            ]:
+            run_response_recording(gnoci, joint_name, file_name, ctl_hz, action)

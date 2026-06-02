@@ -133,6 +133,12 @@ class SensorReader:
         ]
         self.prev_rot_enc_data = self.rot_enc_data
 
+    def sensor_index_from_name(self, name: str):
+        for sensor_config in self.rot_enc_sensor_configs:
+            if sensor_config.name == name:
+                return sensor_config.index
+        return None
+
     @property
     def data(self):
         self.decode_hardware()

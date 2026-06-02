@@ -20,6 +20,8 @@ class Servo:
     pid_controller: PID = None
     offset: float = 0.0
     freq: int = 100
+    control_hz: int = 80
+    max_delta_v: float = 3.0 # 3 units/sec at 80Hz
 
     low_pass_filter: LowPassFilter = None
 
@@ -32,10 +34,12 @@ class Servo:
             output_limits=(-0.05, 0.05),  # max 5 units/tick = 5 units/sec at 100Hz
             sample_time=1.0 / self.freq,
         )
+        self.action_scale = self.max_delta_v / self.control_hz
         self.low_pass_filter = LowPassFilter(alpha=0.4)
         self.low_pass_filter.reset()
 
     def update_setpoint_delta(self, setpoint_delta: float):
+        setpoint_delta = setpoint_delta * self.action_scale
         self.low_pass_filter.update(setpoint_delta)
         updated_setpoint = self.pid_controller.setpoint + self.low_pass_filter.value
         if updated_setpoint > self.pin_limits[1]: updated_setpoint = self.pin_limits[1]

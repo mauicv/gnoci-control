@@ -3,6 +3,7 @@ import os
 import numpy as np
 import time
 from gnoci.net_util.channel import Channel
+from gnoci.config import CONTROL_HZ
 
 _has_i2c = os.path.exists('/dev/i2c-1')
 if _has_i2c:
@@ -16,7 +17,7 @@ else:
 @click.command()
 @click.option('--host', type=str, default=None)
 @click.option('--port', type=int, default=8000)
-@click.option('--ctl-hz', type=int, default=80)
+@click.option('--ctl-hz', type=int, default=CONTROL_HZ)
 @click.option('--limit', type=int, default=None)
 def start(host, port, ctl_hz: int, limit=None):
     from gnoci.setup import setup_gnoci_control
@@ -24,7 +25,7 @@ def start(host, port, ctl_hz: int, limit=None):
     from gnoci.loop import Loop
 
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus)
+    gnoci = setup_gnoci_control(bus=bus, control_hz=ctl_hz)
 
     def _tick():
         time_start = time.perf_counter()
