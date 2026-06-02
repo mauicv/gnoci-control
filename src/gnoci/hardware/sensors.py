@@ -114,6 +114,7 @@ class SensorReader:
             return raw_angle
         sensor_config = self.rot_enc_sensor_configs[i]
         centered_angle = raw_angle - sensor_config.center
+        centered_angle = centered_angle * self.sensor_orientations[i] 
         return centered_angle
 
     def decode_hardware(self):
@@ -121,7 +122,6 @@ class SensorReader:
         decoded = [decode_angle(item) for item in self.rot_enc_raw]
         self.rot_enc_data = [self._unwrap_angle(i, a) for i, a in enumerate(decoded)]
         self.rot_enc_data = [self._center_angle(i, a) for i, a in enumerate(self.rot_enc_data)]
-        self.rot_enc_data = [self.sensor_orientations[i] * a for i, a in enumerate(self.rot_enc_data)]
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
 
     def update_filters(self):
