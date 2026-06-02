@@ -3,6 +3,7 @@ from gnoci.loop import Loop
 import time
 from gnoci.hardware.hardware import init_pca9685
 from gnoci.hardware.hardware import write_servos
+from gnoci.config import CONTROL_HZ
 
 
 class ServoController:
@@ -13,6 +14,7 @@ class ServoController:
             kp: float = 0.08,
             ki: float = 0.0,
             kd: float = 0.005,
+            control_hz: int = CONTROL_HZ,
             **kwargs
         ):
         super().__init__(**kwargs)
@@ -21,6 +23,8 @@ class ServoController:
             "ki": ki,
             "kd": kd,
             "freq": freq,
+            "control_hz": control_hz,
+            "max_delta_v": 3,
         }
 
         # TODO: asymetric in left_yoke__hip and right_yoke__hip reverse-True/False?

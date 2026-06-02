@@ -3,7 +3,7 @@ import os
 import numpy as np
 import time
 from gnoci.servo import DummyServo
-from gnoci.config import MODEL_INPUT_DIM
+from gnoci.config import MODEL_INPUT_DIM, CONTROL_HZ
 import json
 
 _has_i2c = os.path.exists('/dev/i2c-1')
@@ -182,16 +182,6 @@ def test_hardware():
 
 
 def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, action: float):
-    try:
-        with open(file_name, 'r') as f:
-            response_data = json.load(f)
-    except FileNotFoundError:
-        response_data = {joint_name: {
-            "action": action,
-            "angular_pos": [],
-            "angular_vel": [],
-            "time": [],
-        }}
 
     for servo in gnoci.servo_controller.iter_servos():
         if isinstance(servo, DummyServo):
@@ -201,14 +191,24 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
         print(f'recording response for servo: {servo.name}:')
         index = gnoci.sensor_reader.sensor_index_from_name(servo.name)
 
+        
+
+        response_data = {
+            "joint_name": joint_name,
+            "action": action,
+            "angular_pos": [],
+            "angular_vel": [],
+            "time": [],
+        }
+
         for i in range(100):
             time_start = time.perf_counter()
             servo.update_setpoint_delta(action)
             state = gnoci.sensor_reader.data
 
-            response_data[joint_name]["angular_pos"].append(state[index])
-            response_data[joint_name]["angular_vel"].append(state[index + 10])
-            response_data[joint_name]["time"].append(time.perf_counter())
+            response_data["angular_pos"].append(state[index])
+            response_data["angular_vel"].append(state[index + 10])
+            response_data["time"].append(time.perf_counter())
 
             elapsed = time.perf_counter() - time_start
             if elapsed < 1.0 / ctl_hz:
@@ -219,19 +219,19 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
         servo.update_setpoint(0)
         time.sleep(0.5)
 
-    with open(file_name, 'w') as f:
-        json.dump(response_data, f, indent=4)
+    return response_data
+
 
 
 @click.command()
 @click.option('--file-name', type=str, default='response_data.json')
 @click.option('--center-angles', type=bool, default=False)
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
-def measure_response(joint_name: str, file_name: str, center_angles: bool, ctl_hz: int):
+def measure_response(file_name: str, center_angles: bool, ctl_hz: int):
     from gnoci.setup import setup_gnoci_control
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus, center_angles=center_angles, control_hz=ctl_hz)
-
+    response_data = []
     for action in [-1, 1]:
         for joint_name in [
                 "head__left_yoke",
@@ -245,4 +245,7 @@ def measure_response(joint_name: str, file_name: str, center_angles: bool, ctl_h
                 "right_upper_leg__lower_leg",
                 "right_lower_leg__foot",
             ]:
-            run_response_recording(gnoci, joint_name, file_name, ctl_hz, action)
+            response_data.append(run_response_recording(gnoci, joint_name, file_name, ctl_hz, action))
+
+    with open(file_name, 'w') as f:
+        json.dump(response_data, f, indent=4)

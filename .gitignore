@@ -13,3 +13,5 @@ test.png
 images
 src/simulation/description/
 model/
+response_data.json
+test.json
