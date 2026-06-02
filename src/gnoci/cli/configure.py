@@ -225,7 +225,7 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
 
 @click.command()
 @click.option('--file-name', type=str, default='response_data.json')
-@click.option('--center-angles', type=bool, default=False)
+@click.option('--center-angles', type=bool, default=True)
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
 def measure_response(file_name: str, center_angles: bool, ctl_hz: int):
     from gnoci.setup import setup_gnoci_control
