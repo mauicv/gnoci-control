@@ -35,6 +35,7 @@ with open('positioning_data.json', 'r') as f:
 class SensorReader:
     # left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
     sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
+    sensor_orientations = [-1, -1, -1, -1, -1,  1, 1, 1, 1, 1]
     rot_enc_sensor_configs = [SensorConfig(**sensor) for sensor in rot_enc_sensor_configs_data]
 
     def __init__(
@@ -120,6 +121,7 @@ class SensorReader:
         decoded = [decode_angle(item) for item in self.rot_enc_raw]
         self.rot_enc_data = [self._unwrap_angle(i, a) for i, a in enumerate(decoded)]
         self.rot_enc_data = [self._center_angle(i, a) for i, a in enumerate(self.rot_enc_data)]
+        self.rot_enc_data = [self.sensor_orientations[i] * a for i, a in enumerate(self.rot_enc_data)]
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
 
     def update_filters(self):
