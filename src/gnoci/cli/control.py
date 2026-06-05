@@ -19,13 +19,17 @@ else:
 @click.option('--port', type=int, default=8000)
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
 @click.option('--limit', type=int, default=None)
-def start(host, port, ctl_hz: int, limit=None):
+@click.option('--configure-sensors', type=bool, default=True)
+def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
 
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus, control_hz=ctl_hz)
+    if configure_sensors:
+        total_drift, average_drift = gnoci.configure_sensors()
+        print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
 
     def _tick():
         time_start = time.perf_counter()

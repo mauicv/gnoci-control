@@ -23,6 +23,21 @@ class Gnoci:
         )
         time.sleep(0.01)
 
+    def configure_sensors(self):
+        self.sensor_reader.center_angles = False
+        self.servo_controller.update_setpoint([0.0]*10)
+        time.sleep(0.5)
+        center_angles = self.sensor_reader.data[0:10]
+        total_drift = 0.0
+        for sensor in self.sensor_reader.rot_enc_sensor_configs:
+            drift = abs(center_angles[sensor.index] - sensor.center)
+            total_drift += drift
+            average_drift = total_drift / len(self.sensor_reader.rot_enc_sensor_configs)
+            sensor.center = center_angles[sensor.index]
+        self.sensor_reader.center_angles = True
+        time.sleep(0.1)
+        return total_drift, average_drift
+
 
 def setup_gnoci_control(
     bus: smbus.SMBus,
