@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from simple_pid import PID
 from gnoci.filters.low_pass import LowPassFilter
+from gnoci.config import CONTROL_HZ, KP, KI, KD, FREQ, MAX_DELTA_V
 
 SERVO_PWM_THRESHOLD_MIN: int = 500
 SERVO_PWM_THRESHOLD_MAX: int = 2500
 HALF_RANGE = (SERVO_PWM_THRESHOLD_MAX - SERVO_PWM_THRESHOLD_MIN) / 2 # 1000
+
 
 @dataclass
 class Servo:
@@ -12,16 +14,16 @@ class Servo:
     pin_limits: tuple[float, float]
     init_value: float
     reverse: bool = False
-    kp: float = 0.08
-    ki: float = 0.0
-    kd: float = 0.005
+    kp: float = KP
+    ki: float = KI
+    kd: float = KD
     _value: float = 0.0
     _update_value: float = 0.0
     pid_controller: PID = None
     offset: float = 0.0
-    freq: int = 100
-    control_hz: int = 80
-    max_delta_v: float = 3.0 # 3 units/sec at 80Hz
+    freq: int = FREQ
+    control_hz: int = CONTROL_HZ
+    max_delta_v: float = MAX_DELTA_V
 
     low_pass_filter: LowPassFilter = None
 
