@@ -253,3 +253,52 @@ def measure_response(file_name: str, center_angles: bool, ctl_hz: int, configure
 
     with open(file_name, 'w') as f:
         json.dump(response_data, f, indent=4)
+
+
+@click.command()
+@click.option('--file-name', type=str, default='state_data.json')
+@click.option('--center-angles', type=bool, default=True)
+@click.option('--ctl-hz', type=int, default=CONTROL_HZ)
+@click.option('--configure-sensors', type=bool, default=True)
+def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_sensors: bool = True):
+    from gnoci.setup import setup_gnoci_control
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, center_angles=center_angles, control_hz=ctl_hz)
+    if configure_sensors:
+        total_drift, average_drift = gnoci.configure_sensors()
+        print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
+    # response_data = []
+    state_data = {
+        "states": [],
+        "actions": [],
+        "times": [],
+    }
+
+    for i in range(2500):
+        time_start = time.perf_counter()
+
+        state = gnoci.sensor_reader.data
+        gnoci.memory.add_state(state)
+        observation = gnoci.memory.get_observation()
+        action = gnoci.policy.predict(observation)
+
+
+        action = np.zeros((10))
+        action[1] = np.sin(i / 500 * 2 * np.pi) / 500
+        action[6] = np.cos(i / 500 * 2 * np.pi) / 500
+
+        state_data["states"].append(state)
+        state_data["actions"].append(action.tolist())
+        state_data["times"].append(time.perf_counter())
+
+        gnoci.memory.add_action(action)
+        gnoci.servo_controller.update_setpoint_delta(action)
+
+        elapsed = time.perf_counter() - time_start
+        if elapsed > 1.0 / ctl_hz:
+            print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
+            time.sleep(1.0 / ctl_hz - elapsed)
+
+    with open(file_name, 'w') as f:
+        json.dump(state_data, f, indent=4)
+

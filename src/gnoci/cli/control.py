@@ -38,9 +38,10 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         gnoci.memory.add_state(state)
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
-        gnoci.memory.add_action(action[0])
-        action = np.zeros((1, 10)) # TODO: remove this line
-        gnoci.servo_controller.update_setpoint_delta(action[0])
+        print(f"action: {action}")
+        gnoci.memory.add_action(action)
+        action = np.zeros((10)) # TODO: remove this line
+        gnoci.servo_controller.update_setpoint_delta(action)
 
         elapsed = time.perf_counter() - time_start
         if elapsed > 1.0 / ctl_hz:

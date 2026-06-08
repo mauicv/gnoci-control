@@ -15,3 +15,4 @@ src/simulation/description/
 model/
 response_data.json
 test.json
+state_data.json
