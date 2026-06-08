@@ -267,7 +267,7 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
     if configure_sensors:
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
-    # response_data = []
+
     state_data = {
         "states": [],
         "actions": [],
@@ -295,8 +295,7 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         gnoci.servo_controller.update_setpoint_delta(action)
 
         elapsed = time.perf_counter() - time_start
-        if elapsed > 1.0 / ctl_hz:
-            print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
+        if elapsed < 1.0 / ctl_hz:
             time.sleep(1.0 / ctl_hz - elapsed)
 
     with open(file_name, 'w') as f:
