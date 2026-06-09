@@ -13,7 +13,7 @@ PWM_MUX_ADDR = 0x40
 PCA9685_LED0 = 0x06
 NUM_SERVOS = 10
 
-IMU_GYRO_SCALE = 10.0  # rad/s — clips to [-1, 1] at this angular velocity
+IMU_GYRO_SCALE = 250.0  # rad/s — clips to [-1, 1] at this angular velocity (1 is 250 deg/s)
 IMU_ACC_SCALE  = 19.62 # m/s² (2g) — clips to [-1, 1] at 2g
 
 bus_lock = th.Lock()
