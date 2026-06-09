@@ -50,6 +50,7 @@ class SensorReader:
         self.center_angles = center_angles
         self.c_filter = ComplementaryFilter(alpha=0.95)
         self.acc_low_pass_filters = [LowPassFilter(alpha=0.2) for _ in range(3)]
+        self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=0.3) for _ in range(10)]
         self.bus = bus
         init_mpu6050(bus)
         try:
@@ -139,6 +140,7 @@ class SensorReader:
         self.angular_velocities = [
             (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
         ]
+        self.angular_velocities = [self.angular_velocities_low_pass_filters[i].update(v) for i, v in enumerate(self.angular_velocities)]
         self.prev_rot_enc_data = self.rot_enc_data
 
     def sensor_index_from_name(self, name: str):
