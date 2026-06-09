@@ -14,7 +14,7 @@ PCA9685_LED0 = 0x06
 NUM_SERVOS = 10
 
 IMU_GYRO_SCALE = 250.0  # rad/s — clips to [-1, 1] at this angular velocity (1 is 250 deg/s)
-IMU_ACC_SCALE  = 19.62 # m/s² (2g) — clips to [-1, 1] at 2g
+IMU_ACC_SCALE  = 1.0 # m/s² (2g) — clips to [-1, 1] at 2g
 
 bus_lock = th.Lock()
 
@@ -103,8 +103,8 @@ def decode_imu(raw):
         val = struct.unpack('>h', bytes(raw[i:i+2]))[0]
         vals.append(val)
     # vals = [ax, ay, az, temp, gx, gy, gz]
-    ax, ay, az = [v / (16384.0*IMU_ACC_SCALE) for v in vals[0:3]]  # ±2g default
-    gx, gy, gz = [v / (131.0*IMU_GYRO_SCALE) for v in vals[4:7]]     # ±250°/s default
+    ax, ay, az = [v / (16384.0) for v in vals[0:3]]  # ±2g default
+    gx, gy, gz = [v / (131.0) for v in vals[4:7]]   # ±250°/s default (1 is 250 deg/s)
     return gx, gy, gz, ax, ay, az
 
 def decode_angle(raw):

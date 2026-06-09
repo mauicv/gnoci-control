@@ -17,7 +17,7 @@ else:
 
 
 def display(elapsed, imu_data, rot_enc_data, adc_data, flush=True):
-    ax, ay, az, gx, gy, gz = imu_data
+    gx, gy, gz, ax, ay, az = imu_data
     imu_line = f"  IMU  | ax:{ax:+7.3f} ay:{ay:+7.3f} az:{az:+7.3f} gx:{gx:+7.1f} gy:{gy:+7.1f} gz:{gz:+7.1f}"
     rot_line = f"  ROT  | " + " ".join(f"{v:5.3f}" if v is not None else "  N/A" for v in rot_enc_data)
     adc_line = f"  ADC  | " + " ".join(f"{'ON' if v else 'OFF':>5}" if v is not None else "  N/A" for v in adc_data)
@@ -285,8 +285,8 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
 
 
         action = np.zeros((10))
-        action[1] = np.sin(i / 500 * 2 * np.pi) / 500
-        action[6] = np.cos(i / 500 * 2 * np.pi) / 500
+        action[1] = np.sin(i / 50 * 2 * np.pi) / 25
+        action[6] = np.cos(i / 50 * 2 * np.pi) / 25
 
         state_data["states"].append(state)
         state_data["actions"].append(action.tolist())
