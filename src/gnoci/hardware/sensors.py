@@ -128,7 +128,7 @@ class SensorReader:
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
 
     def update_filters(self):
-        self.c_filter.update(self.imu_data[:3], self.imu_data[3:])
+        self.c_filter.update(self.imu_raw[:3], self.imu_raw[3:])
         self.pitch = self.c_filter.pitch
         self.roll = self.c_filter.roll
 
