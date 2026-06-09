@@ -30,7 +30,8 @@ try:
         measure_positions,
         test_hardware,
         measure_response,
-        record_states
+        record_states,
+        orient
     )
     cli.add_command(run_checks)
     cli.add_command(test_control_hz)
@@ -38,6 +39,7 @@ try:
     cli.add_command(test_hardware)
     cli.add_command(measure_response)
     cli.add_command(record_states)
+    cli.add_command(orient)
 except ImportError as error:
     logger.error(error)
     raise error

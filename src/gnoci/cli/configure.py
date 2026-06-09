@@ -317,6 +317,7 @@ def compute_major_change(state: np.ndarray):
     accel_direction = np.sign(accel_vector[max_accel])
     print(f"major change: accel {names[max_accel]} {directions[accel_direction]}")
 
+
 @click.command()
 @click.option('--file-name', type=str, default='state_data.json')
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
