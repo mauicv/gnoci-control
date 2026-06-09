@@ -307,7 +307,7 @@ def compute_major_change(state: np.ndarray):
     gx, gy, gz, ax, ay, az = state[24], state[25], state[26], state[27], state[28], state[29]
     gyro_vector = np.array([gx, gy, gz])
     names = ["x", "y", "z"]
-    directions = ["+", "-"]
+    directions = ["-", "+"]
     max_gyro = np.argmax(np.abs(gyro_vector))
     rotation_direction = int(np.sign(gyro_vector[max_gyro]) + 1) // 2
 
