@@ -237,7 +237,7 @@ def measure_response(file_name: str, center_angles: bool, ctl_hz: int, configure
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
     response_data = []
-    for action in [-1, 1]:
+    for action in [-1, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1]:
         for joint_name in [
                 "head__left_yoke",
                 "left_yoke__hip",
