@@ -302,3 +302,43 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
     with open(file_name, 'w') as f:
         json.dump(state_data, f, indent=4)
 
+
+def compute_major_change(state: np.ndarray):
+    gx, gy, gz, ax, ay, az = state[20], state[21], state[22], state[23], state[24], state[25]
+    gyro_vector = np.array([gx, gy, gz])
+    names = ["x", "y", "z"]
+    directions = ["+", "-"]
+    max_gyro = np.argmax(np.abs(gyro_vector))
+    rotation_direction = np.sign(gyro_vector[max_gyro])
+    print(f"major change: gyro {names[max_gyro]} {directions[rotation_direction]}")
+
+    accel_vector = np.array([ax, ay, az])
+    max_accel = np.argmax(np.abs(accel_vector))
+    accel_direction = np.sign(accel_vector[max_accel])
+    print(f"major change: accel {names[max_accel]} {directions[accel_direction]}")
+
+@click.command()
+@click.option('--file-name', type=str, default='state_data.json')
+@click.option('--ctl-hz', type=int, default=CONTROL_HZ)
+@click.option('--configure-sensors', type=bool, default=True)
+def orient(file_name: str, ctl_hz: int, configure_sensors: bool = True):
+    from gnoci.setup import setup_gnoci_control
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus, center_angles=True, control_hz=ctl_hz)
+    if configure_sensors:
+        total_drift, average_drift = gnoci.configure_sensors()
+        print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
+
+    action = np.zeros((10))
+    gnoci.servo_controller.update_setpoint(action)
+    while True:
+        time_start = time.perf_counter()
+        state = gnoci.sensor_reader.data
+        compute_major_change(state)
+        elapsed = time.perf_counter() - time_start
+        if elapsed < 1.0 / ctl_hz:
+            time.sleep(1.0 / ctl_hz - elapsed)
+
+    # with open(file_name, 'w') as f:
+    #     json.dump(state_data, f, indent=4)
+
