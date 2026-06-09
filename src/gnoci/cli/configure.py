@@ -304,18 +304,18 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
 
 
 def compute_major_change(state: np.ndarray):
-    gx, gy, gz, ax, ay, az = state[20], state[21], state[22], state[23], state[24], state[25]
+    gx, gy, gz, ax, ay, az = state[24], state[25], state[26], state[27], state[28], state[29]
     gyro_vector = np.array([gx, gy, gz])
     names = ["x", "y", "z"]
     directions = ["+", "-"]
     max_gyro = np.argmax(np.abs(gyro_vector))
-    rotation_direction = np.sign(gyro_vector[max_gyro])
-    print(f"major change: gyro {names[max_gyro]} {directions[rotation_direction]}")
+    rotation_direction = int(np.sign(gyro_vector[max_gyro]) + 1) // 2
 
     accel_vector = np.array([ax, ay, az])
     max_accel = np.argmax(np.abs(accel_vector))
-    accel_direction = np.sign(accel_vector[max_accel])
-    print(f"major change: accel {names[max_accel]} {directions[accel_direction]}")
+    accel_direction = int(np.sign(accel_vector[max_accel]) + 1) // 2
+
+    print(f"gyro {names[max_gyro]} {directions[rotation_direction]} | accel {names[max_accel]} {directions[accel_direction]}", end="\r")
 
 
 @click.command()

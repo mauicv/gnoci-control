@@ -41,3 +41,22 @@ left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_le
       "right_upper_leg__lower_leg",
       "right_lower_leg__foot",
   ]
+
+
+
+standing z -
+upsidedown z +
+on front x +
+on front x -
+lieing on right hand side y -
+lieing on right hand side y +
+
+
+rotating standing from left to right z+
+rotating standing from right to left z-
+
+falling forwards y-
+falliong back y+
+
+falling right side x-
+falling left side x+
