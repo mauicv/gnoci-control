@@ -1,6 +1,6 @@
 import time
 from gnoci.filters.complementary import ComplementaryFilter
-from gnoci.filters.identity import IdentityFilter
+from gnoci.filters.low_pass import LowPassFilter
 from gnoci.loop import Loop
 from gnoci.hardware.hardware import (
     read_sensor_data,
@@ -49,6 +49,7 @@ class SensorReader:
         self.freq = freq
         self.center_angles = center_angles
         self.c_filter = ComplementaryFilter(alpha=0.95)
+        self.acc_low_pass_filters = [LowPassFilter(alpha=0.2) for _ in range(3)]
         self.bus = bus
         init_mpu6050(bus)
         try:
@@ -118,7 +119,9 @@ class SensorReader:
         return centered_angle
 
     def decode_hardware(self):
-        self.imu_data = decode_imu(self.imu_raw)
+        gyro_data, acc_data = decode_imu(self.imu_raw)
+        acc_data = [self.acc_low_pass_filters[i].update(acc_data[i]) for i in range(3)]
+        self.imu_data = [*gyro_data, *acc_data]
         decoded = [decode_angle(item) for item in self.rot_enc_raw]
         self.rot_enc_data = [self._unwrap_angle(i, a) for i, a in enumerate(decoded)]
         self.rot_enc_data = [self._center_angle(i, a) for i, a in enumerate(self.rot_enc_data)]

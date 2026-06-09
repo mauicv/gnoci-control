@@ -5,6 +5,7 @@ import time
 from gnoci.servo import DummyServo
 from gnoci.config import MODEL_INPUT_DIM, CONTROL_HZ
 import json
+from tqdm import tqdm
 
 _has_i2c = os.path.exists('/dev/i2c-1')
 if _has_i2c:
@@ -274,7 +275,7 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         "times": [],
     }
 
-    for i in range(2500):
+    for i in tqdm(range(500)):
         time_start = time.perf_counter()
 
         state = gnoci.sensor_reader.data
