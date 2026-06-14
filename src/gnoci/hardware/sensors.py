@@ -85,6 +85,12 @@ class SensorReader:
         )
         self.hardware_loop.start()
 
+    def reset_filters(self):
+        for filter in self.acc_low_pass_filters:
+            filter.reset()
+        for filter in self.angular_velocities_low_pass_filters:
+            filter.reset()
+
     def _read_hardware(self):
         try:
             self.imu_raw, self.rot_enc_raw, self.adc_raw = read_sensor_data(self.bus)

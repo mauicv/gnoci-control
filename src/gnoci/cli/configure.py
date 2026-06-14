@@ -192,8 +192,6 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
         print(f'recording response for servo: {servo.name}:')
         index = gnoci.sensor_reader.sensor_index_from_name(servo.name)
 
-        
-
         response_data = {
             "joint_name": joint_name,
             "action": action,
@@ -236,19 +234,22 @@ def measure_response(file_name: str, center_angles: bool, ctl_hz: int, configure
     if configure_sensors:
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
+    
+    gnoci.servo_controller.update_setpoint([0.0]*10)
+    time.sleep(1)
     response_data = []
-    for action in [-1, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1]:
+    for action in [-1, -0.25, -0.1, -0.05, 0.05, 0.1, 0.25, 1]:
         for joint_name in [
-                "head__left_yoke",
-                "left_yoke__hip",
+                # "head__left_yoke",
+                # "left_yoke__hip",
                 "left_hip__upper_leg",
-                "left_upper_leg__lower_leg",
-                "left_lower_leg__foot",
-                "head__right_yoke",
-                "right_yoke__hip",
-                "right_hip__upper_leg",
-                "right_upper_leg__lower_leg",
-                "right_lower_leg__foot",
+                # "left_upper_leg__lower_leg",
+                # "left_lower_leg__foot",
+                # "head__right_yoke",
+                # "right_yoke__hip",
+                # "right_hip__upper_leg",
+                # "right_upper_leg__lower_leg",
+                # "right_lower_leg__foot",
             ]:
             response_data.append(run_response_recording(gnoci, joint_name, file_name, ctl_hz, action))
 
