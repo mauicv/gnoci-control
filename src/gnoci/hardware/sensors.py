@@ -55,7 +55,7 @@ class SensorReader:
             bus,
             freq=100,
             center_angles=True,
-            apply_obs_norm=True,
+            apply_obs_norm=False,
             **kwargs
         ):
         super().__init__(**kwargs)
