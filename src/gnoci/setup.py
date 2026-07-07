@@ -10,7 +10,12 @@ from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STAC
 
 
 class Gnoci:
-    def __init__(self, bus: smbus.SMBus, center_angles: bool = True, control_hz: int = CONTROL_HZ):
+    def __init__(
+            self,
+            bus: smbus.SMBus,
+            center_angles: bool = True,
+            control_hz: int = CONTROL_HZ,
+        ):
         self.bus = bus
         self.policy = PolicyRunner(obs_dim=MODEL_INPUT_DIM)
         self.servo_controller = ServoController(bus=self.bus, freq=FREQ, kp=KP, ki=KI, kd=KD, control_hz=control_hz)
@@ -25,6 +30,7 @@ class Gnoci:
 
     def configure_sensors(self):
         self.sensor_reader.center_angles = False
+        self.sensor_reader.apply_obs_norm = False
         self.servo_controller.update_setpoint([0.0]*10)
         time.sleep(0.5)
         center_angles = self.sensor_reader.data[0:10]
@@ -35,6 +41,7 @@ class Gnoci:
             average_drift = total_drift / len(self.sensor_reader.rot_enc_sensor_configs)
             sensor.center = center_angles[sensor.index]
         self.sensor_reader.center_angles = True
+        self.sensor_reader.apply_obs_norm = True
         time.sleep(0.1)
         return total_drift, average_drift
 

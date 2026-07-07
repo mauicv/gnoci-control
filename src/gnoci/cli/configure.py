@@ -285,7 +285,6 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
 
-
         action = np.zeros((10))
         action[1] = np.sin(i / 50 * 2 * np.pi) / 25
         action[6] = np.cos(i / 50 * 2 * np.pi) / 25

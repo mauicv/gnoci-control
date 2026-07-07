@@ -4,7 +4,10 @@ from gnoci.config import CONTROL_HZ, FREQ
 
 
 def _validate_config_settings(config: dict):
-    if config['control_hz'] != CONTROL_HZ:
+    print('control hz:', 1.0 / (config['physics_dt'] * config['n_substeps']), 'Hz')
+    print('hardware hz:', 1.0 / (config['physics_dt'] * config['hardware_update_every']), 'Hz')
+
+    if config['action_hz'] != CONTROL_HZ:
         raise ValueError(f"Control Hz mismatch: {config['control_hz']} != {CONTROL_HZ}")
     if config['hardware_hz'] != FREQ:
         raise ValueError(f"Hardware Hz mismatch: {config['hardware_hz']} != {FREQ}")
@@ -12,7 +15,7 @@ def _validate_config_settings(config: dict):
 
 
 class ActionDSInterface:
-    DATA_DIR = os.path.dirname(__file__) + '/dataset/dataset.json'
+    DATA_DIR = os.path.dirname(__file__) + '/dataset.json'
 
     def __init__(self):
         with open(self.DATA_DIR, 'r') as f:

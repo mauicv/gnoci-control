@@ -13,6 +13,18 @@ from gnoci.hardware.hardware import (
 )
 from dataclasses import dataclass
 import json
+import numpy as np
+
+
+_OBS_NORM = np.array(
+    [0.32] * 10             # joint positions  (already /pi, offset-removed)
+    + [3.5] * 10            # joint velocities (rad/s)
+    + [1.0] * 4             # binary foot contacts
+    + [1.4] * 3             # gyro  (already * IMU_GYRO_SCALE)
+    + [2.8] * 3             # accel (already / IMU_ACC_SCALE)
+    + [0.38] * 2,           # pitch, roll (rad)
+    dtype=np.float32,
+)
 
 @dataclass
 class SensorConfig:
@@ -43,11 +55,13 @@ class SensorReader:
             bus,
             freq=100,
             center_angles=True,
+            apply_obs_norm=True,
             **kwargs
         ):
         super().__init__(**kwargs)
         self.freq = freq
         self.center_angles = center_angles
+        self.apply_obs_norm = apply_obs_norm
         self.c_filter = ComplementaryFilter(alpha=0.95)
         self.acc_low_pass_filters = [LowPassFilter(alpha=0.2) for _ in range(3)]
         self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=0.3) for _ in range(10)]
@@ -160,14 +174,18 @@ class SensorReader:
         self.decode_hardware()
         self.update_filters()
         self.derive_angular_velocities()
-        return [
+
+        obs = np.array([
             *self.rot_enc_data,
             *self.angular_velocities,
             *self.adc_data,
             *self.imu_data,
             self.roll,
             self.pitch,
-        ]
+        ]) 
+        if self.apply_obs_norm:
+            obs = np.array(obs) * _OBS_NORM
+        return obs
 
     @property
     def overturned(self):
