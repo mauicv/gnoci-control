@@ -25,7 +25,7 @@ def record_rollout(gnoci: Gnoci, rollout: dict, config: dict):
     for action in actions:
         time_start = time.perf_counter()
 
-        gnoci.servo_controller.update_setpoint(action)
+        gnoci.servo_controller.update_setpoint_delta(action)
         state = gnoci.sensor_reader.data
         rollout['measured_states'].append(state.tolist())
         rollout['times'].append(time.perf_counter() - rollout_start_time)
