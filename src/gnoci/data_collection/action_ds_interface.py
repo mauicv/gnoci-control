@@ -27,6 +27,8 @@ class ActionDSInterface:
         for rollout in self.data['data']:
             yield rollout
 
+    def __len__(self):
+        return len(self.data['data'])
 
 if __name__ == '__main__':
     ds = ActionDSInterface()

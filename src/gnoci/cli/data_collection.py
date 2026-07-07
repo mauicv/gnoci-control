@@ -35,6 +35,7 @@ def record_rollout(gnoci: Gnoci, rollout: dict, config: dict):
             time.sleep(1.0 / ctl_hz - elapsed)
     return rollout
 
+
 @click.command()
 @click.option('--file-name', type=str, default='sysid_data.json')
 @click.option('--center-angles', type=bool, default=True)
@@ -55,13 +56,16 @@ def record_data(file_name: str, center_angles: bool, ctl_hz: int, configure_sens
         'data': [],
     }
 
-    for rollout in tqdm(action_ds.iter_rollouts()):
+    pbar = tqdm(total=len(action_ds))
+
+    for rollout in tqdm(action_ds.iter_rollouts(), ):
         gnoci.servo_controller.update_setpoint(np.zeros(10))
         time.sleep(2)
         rollout = record_rollout(gnoci, rollout, action_ds.config)
         sysid_data['data'].append(rollout)
-        break
+        pbar.update(1)
 
+    pbar.close()
     
     gnoci.servo_controller.update_setpoint(np.zeros(10))
     time.sleep(2)
