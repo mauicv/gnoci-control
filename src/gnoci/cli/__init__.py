@@ -51,5 +51,14 @@ except ImportError as error:
     logger.error(error)
     raise error
 
+
+try:
+    from gnoci.cli.data_collection import record_data
+    cli.add_command(record_data)
+except ImportError as error:
+    logger.error(error)
+    raise error
+
+
 if __name__ == "__main__":
     cli()

@@ -33,6 +33,7 @@ def display(elapsed, imu_data, rot_enc_data, adc_data, flush=True):
         input()
         print("\n\n\n\n")
 
+
 @click.command()
 @click.option('--limit', type=int, default=1000)
 def test_control_hz(limit=1000):
