@@ -78,7 +78,7 @@ class SensorReader:
 
         self.imu_data = [0] * 6
         self.rot_enc_data = [0] * 10
-        self.prev_rot_enc_data = [0] * 10
+        self.prev_rot_enc_data = None
         self.adc_data = [0] * 4
 
         # Cumulative unwrapped angles
@@ -104,6 +104,7 @@ class SensorReader:
             filter.reset()
         for filter in self.angular_velocities_low_pass_filters:
             filter.reset()
+        self.prev_rot_enc_data = None
 
     def _read_hardware(self):
         try:
@@ -157,6 +158,10 @@ class SensorReader:
         self.roll = self.c_filter.roll
 
     def derive_angular_velocities(self):
+        if self.prev_rot_enc_data is None:
+            self.prev_rot_enc_data = self.rot_enc_data
+            self.angular_velocities = [0.0] * 10
+            return
         self.angular_velocities = [
             (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
         ]
