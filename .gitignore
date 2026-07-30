@@ -1,43 +1,18 @@
-# Compiled object files
-*.o
-*.obj
-
-# Static & dynamic libraries
-*.a
-*.lib
-*.so
-*.dll
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# CMake build directories
-/CMakeFiles/
-/CMakeCache.txt
-/cmake_install.cmake
-/Makefile
-/build/
-/out/
-/bin/
-/lib/
-
-# Make build artifacts
-*.d
-
-.vscode/
-
-# OS files
+puppy_pi_servo_control
+__pycache__
+venv
+gnoci-497019-ecf9e3fbc49e.json
+.env
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Temporary files
-*~
-*.swp
-
-python/venv/
+build
+src/gnoci_control.egg-info
+servo-log.txt
+calibration-imgs
+calibration_matrix.json
+test.png
+images
+src/simulation/description/
+model/
+response_data.json
+test.json
+state_data.json

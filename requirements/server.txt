@@ -1,0 +1,5 @@
+click
+python-dotenv
+numpy
+simple-pid
+smbus2
