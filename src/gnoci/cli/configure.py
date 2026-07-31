@@ -53,7 +53,7 @@ def test_control_hz(limit=1000):
     servo_controller.deinit()
 
     print("\n\n\n\n")
-    servo_controller.update_setpoint([0]*10)
+    servo_controller.update_value([0]*10)
 
     for i in range(limit):
         start = time.perf_counter()
@@ -88,37 +88,37 @@ def run_checks():
         print(f'range test servo: {servo.name}:')
         servo_initial_value = servo.value
         for value in np.linspace(-1, 1, 10):
-            servo.update_setpoint(value)
+            servo.update_value(value)
             time.sleep(0.1)
-        servo.update_setpoint(servo_initial_value)
+        servo.update_value(servo_initial_value)
         time.sleep(0.01)
         print(f'value: {servo_initial_value}, pwm: {servo.get_pwm()}')
 
 
 def detect_joint_range(servo, sensor_reader, joint_name: str):
     r_d = []
-    servo.update_setpoint(0.0)
+    servo.update_value(0.0)
     time.sleep(1)
     sensor_reader._read_hardware()
     sensor_reader.decode_hardware()
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
-    servo.update_setpoint(-1)
+    servo.update_value(-1)
     time.sleep(1)
     sensor_reader._read_hardware()
     sensor_reader.decode_hardware()
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
-    servo.update_setpoint(1)
+    servo.update_value(1)
     time.sleep(1)
     sensor_reader._read_hardware()
     sensor_reader.decode_hardware()
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
-    servo.update_setpoint(0.0)
+    servo.update_value(0.0)
     time.sleep(1)
 
     max_diff = 0
@@ -203,7 +203,7 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
 
         for i in range(100):
             time_start = time.perf_counter()
-            servo.update_setpoint_delta(action)
+            servo.update_value_delta(action)
             state = gnoci.sensor_reader.data
 
             response_data["angular_pos"].append(state[index])
@@ -216,7 +216,7 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
             else:
                 print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
 
-        servo.update_setpoint(0)
+        servo.update_value(0)
         time.sleep(0.5)
 
     return response_data
@@ -236,7 +236,7 @@ def measure_response(file_name: str, center_angles: bool, ctl_hz: int, configure
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
     
-    gnoci.servo_controller.update_setpoint([0.0]*10)
+    gnoci.servo_controller.update_value([0.0]*10)
     time.sleep(1)
     response_data = []
     for action in [-1, -0.25, -0.1, -0.05, 0.05, 0.1, 0.25, 1]:
@@ -294,7 +294,7 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         state_data["times"].append(time.perf_counter())
 
         gnoci.memory.add_action(action)
-        gnoci.servo_controller.update_setpoint_delta(action)
+        gnoci.servo_controller.update_value_delta(action)
 
         elapsed = time.perf_counter() - time_start
         if elapsed < 1.0 / ctl_hz:
@@ -332,7 +332,7 @@ def orient(file_name: str, ctl_hz: int, configure_sensors: bool = True):
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
 
     action = np.zeros((10))
-    gnoci.servo_controller.update_setpoint(action)
+    gnoci.servo_controller.update_value(action)
     while True:
         time_start = time.perf_counter()
         state = gnoci.sensor_reader.data

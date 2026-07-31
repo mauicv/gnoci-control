@@ -25,7 +25,7 @@ def record_rollout(gnoci: Gnoci, rollout: dict, config: dict):
     for action in actions:
         time_start = time.perf_counter()
 
-        gnoci.servo_controller.update_setpoint_delta(action)
+        gnoci.servo_controller.update_value_delta(action)
         state = gnoci.sensor_reader.data
         rollout['measured_states'].append(state.tolist())
         rollout['times'].append(time.perf_counter() - rollout_start_time)
@@ -59,7 +59,7 @@ def record_data(file_name: str, center_angles: bool, ctl_hz: int, configure_sens
     pbar = tqdm(total=len(action_ds))
 
     for rollout in tqdm(action_ds.iter_rollouts(), ):
-        gnoci.servo_controller.update_setpoint(np.zeros(10))
+        gnoci.servo_controller.update_value(np.zeros(10))
         time.sleep(2)
         rollout = record_rollout(gnoci, rollout, action_ds.config)
         sysid_data['data'].append(rollout)
@@ -67,7 +67,7 @@ def record_data(file_name: str, center_angles: bool, ctl_hz: int, configure_sens
 
     pbar.close()
     
-    gnoci.servo_controller.update_setpoint(np.zeros(10))
+    gnoci.servo_controller.update_value(np.zeros(10))
     time.sleep(2)
 
     with open(file_name, 'w') as f:

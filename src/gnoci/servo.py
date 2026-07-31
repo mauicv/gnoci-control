@@ -19,7 +19,6 @@ class Servo:
     max_delta_v: float = MAX_DELTA_V
     low_pass_filter_alpha: float = 0.4
     low_pass_filter: LowPassFilter = None
-    action_queue: list[float] = []
 
 
     def __post_init__(self):
@@ -59,11 +58,11 @@ class DummyServo():
     def __init__(self):
         self.value = 0.0
 
-    def update_setpoint_delta(self, setpoint_delta: float):
-        self.value += setpoint_delta
+    def update_value_delta(self, value_delta: float):
+        self.value += value_delta
 
-    def update_setpoint(self, setpoint: float):
-        self.value = setpoint
+    def update_value(self, value: float):
+        self.value = value
 
     def get_pwm(self):
         return self.value

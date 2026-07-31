@@ -41,7 +41,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         # print(f"action: {action}")
         gnoci.memory.add_action(action)
         action = action * 0
-        gnoci.servo_controller.update_setpoint_delta(action)
+        gnoci.servo_controller.update_value_delta(action)
 
         elapsed = time.perf_counter() - time_start
         if elapsed > 1.0 / ctl_hz:

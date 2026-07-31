@@ -29,7 +29,7 @@ class Gnoci:
     def configure_sensors(self):
         self.sensor_reader.center_angles = False
         self.sensor_reader.apply_obs_norm = False
-        self.servo_controller.update_setpoint([0.0]*10)
+        self.servo_controller.update_value([0.0]*10)
         time.sleep(0.5)
         center_angles = self.sensor_reader.data[0:10]
         total_drift = 0.0
