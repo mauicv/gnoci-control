@@ -162,8 +162,10 @@ class SensorReader:
             self.prev_rot_enc_data = self.rot_enc_data
             self.angular_velocities = [0.0] * 10
             return
+        # encoder units are pi-rad (decode_angle maps one revolution to [-1, 1]),
+        # so scale by pi to get rad/s, matching sim's raw qvel observations
         self.angular_velocities = [
-            (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
+            np.pi * (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
         ]
         self.angular_velocities = [self.angular_velocities_low_pass_filters[i].update(v) for i, v in enumerate(self.angular_velocities)]
         self.prev_rot_enc_data = self.rot_enc_data
@@ -185,9 +187,9 @@ class SensorReader:
             *self.angular_velocities,
             *self.adc_data,
             *self.imu_data,
-            self.roll,
             self.pitch,
-        ]) 
+            self.roll,
+        ])
         # if self.apply_obs_norm:
         #     obs = np.array(obs) * _OBS_NORM
         return obs
