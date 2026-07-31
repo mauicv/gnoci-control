@@ -188,8 +188,8 @@ class SensorReader:
             self.roll,
             self.pitch,
         ]) 
-        if self.apply_obs_norm:
-            obs = np.array(obs) * _OBS_NORM
+        # if self.apply_obs_norm:
+        #     obs = np.array(obs) * _OBS_NORM
         return obs
 
     @property

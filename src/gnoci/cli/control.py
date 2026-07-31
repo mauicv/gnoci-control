@@ -31,6 +31,9 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
 
+    actions = []
+    states = []
+
     def _tick():
         time_start = time.perf_counter()
 
@@ -38,10 +41,11 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         gnoci.memory.add_state(state)
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
-        # print(f"action: {action}")
         gnoci.memory.add_action(action)
         action = action * 0
         gnoci.servo_controller.update_value_delta(action)
+        actions.append(action.tolist())
+        states.append(state.tolist())
 
         elapsed = time.perf_counter() - time_start
         if elapsed > 1.0 / ctl_hz:
@@ -49,4 +53,11 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
 
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
-    time.sleep(10)
+    time.sleep(3)
+
+    import json
+    with open('rollout.json', 'w') as f:
+        json.dump({
+            'actions': actions,
+            'states': states,
+        }, f)

@@ -16,7 +16,6 @@ class ServoController:
         ):
         super().__init__(**kwargs)
         generic_values = {
-            "freq": freq,
             "control_hz": control_hz,
             "max_delta_v": MAX_DELTA_V,
         }
