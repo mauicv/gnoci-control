@@ -86,6 +86,7 @@ class SensorReader:
         self.rot_enc_prev = [None] * 10
 
         self.angular_velocities = [0.0] * 10
+        self._vel_ts_prev = time.perf_counter()
 
         self.pitch = 0
         self.roll = 0
@@ -158,14 +159,21 @@ class SensorReader:
         self.roll = self.c_filter.roll
 
     def derive_angular_velocities(self):
+        # dt must span the interval between successive data-property reads (the
+        # control rate), not the faster hardware-loop interval, or velocities
+        # are inflated by FREQ/CONTROL_HZ
+        now = time.perf_counter()
         if self.prev_rot_enc_data is None:
             self.prev_rot_enc_data = self.rot_enc_data
+            self._vel_ts_prev = now
             self.angular_velocities = [0.0] * 10
             return
+        dt = now - self._vel_ts_prev
+        self._vel_ts_prev = now
         # encoder units are pi-rad (decode_angle maps one revolution to [-1, 1]),
         # so scale by pi to get rad/s, matching sim's raw qvel observations
         self.angular_velocities = [
-            np.pi * (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
+            np.pi * (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (dt + 1e-8) for i in range(10)
         ]
         self.angular_velocities = [self.angular_velocities_low_pass_filters[i].update(v) for i, v in enumerate(self.angular_velocities)]
         self.prev_rot_enc_data = self.rot_enc_data

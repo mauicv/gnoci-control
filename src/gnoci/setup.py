@@ -40,6 +40,10 @@ class Gnoci:
             sensor.center = center_angles[sensor.index]
         self.sensor_reader.center_angles = True
         self.sensor_reader.apply_obs_norm = True
+        # the data read above stored uncentered positions as prev_rot_enc_data;
+        # reset so the first control tick reports zero velocity instead of a
+        # centered-minus-uncentered spike
+        self.sensor_reader.reset_filters()
         time.sleep(0.1)
         return total_drift, average_drift
 
