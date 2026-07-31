@@ -1,12 +1,10 @@
 import time
-from gnoci.servo import Servo, DummyServo
 import smbus2 as smbus
 from gnoci.hardware import SensorReader
 from gnoci.hardware import ServoController
 from gnoci.predict import PolicyRunner
-from gnoci.loop import Loop
 from gnoci.memory import Memory
-from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STACK_DIM, MODEL_INPUT_DIM, FREQ, KP, KI, KD, CONTROL_HZ
+from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STACK_DIM, MODEL_INPUT_DIM, FREQ, CONTROL_HZ
 
 
 class Gnoci:
@@ -18,7 +16,7 @@ class Gnoci:
         ):
         self.bus = bus
         self.policy = PolicyRunner(obs_dim=MODEL_INPUT_DIM)
-        self.servo_controller = ServoController(bus=self.bus, freq=FREQ, kp=KP, ki=KI, kd=KD, control_hz=control_hz)
+        self.servo_controller = ServoController(bus=self.bus, freq=control_hz, control_hz=control_hz)
         self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ, center_angles=center_angles)
         self.memory = Memory(
             num_states=OBS_STACK_DIM,

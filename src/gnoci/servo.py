@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from simple_pid import PID
 from gnoci.filters.low_pass import LowPassFilter
-from gnoci.config import CONTROL_HZ, KP, KI, KD, FREQ, MAX_DELTA_V
+from gnoci.config import CONTROL_HZ, MAX_DELTA_V
 
 SERVO_PWM_THRESHOLD_MIN: int = 500
 SERVO_PWM_THRESHOLD_MAX: int = 2500
@@ -14,42 +13,28 @@ class Servo:
     pin_limits: tuple[float, float]
     init_value: float
     reverse: bool = False
-    kp: float = KP
-    ki: float = KI
-    kd: float = KD
     _value: float = 0.0
-    _update_value: float = 0.0
-    pid_controller: PID = None
     offset: float = 0.0
-    freq: int = FREQ
     control_hz: int = CONTROL_HZ
     max_delta_v: float = MAX_DELTA_V
-
+    low_pass_filter_alpha: float = 0.4
     low_pass_filter: LowPassFilter = None
+    action_queue: list[float] = []
 
 
     def __post_init__(self):
-        self.pid_controller = PID(
-            self.kp, self.ki, self.kd,
-            starting_output=0,
-            setpoint=self.init_value,
-            output_limits=(-0.05, 0.05),  # max 5 units/tick = 5 units/sec at 100Hz
-            sample_time=1.0 / self.freq,
-        )
+        self._value = self.init_value
         self.action_scale = self.max_delta_v / self.control_hz
-        self.low_pass_filter = LowPassFilter(alpha=0.4)
+        self.low_pass_filter = LowPassFilter(alpha=self.low_pass_filter_alpha)
         self.low_pass_filter.reset()
 
-    def update_setpoint_delta(self, setpoint_delta: float):
-        setpoint_delta = setpoint_delta * self.action_scale
-        self.low_pass_filter.update(setpoint_delta)
-        updated_setpoint = self.pid_controller.setpoint + self.low_pass_filter.value
-        if updated_setpoint > self.pin_limits[1]: updated_setpoint = self.pin_limits[1]
-        elif updated_setpoint < self.pin_limits[0]: updated_setpoint = self.pin_limits[0]
-        self.pid_controller.setpoint = updated_setpoint
+    def update_value_delta(self, value_delta: float):
+        value_delta = value_delta * self.action_scale
+        self.low_pass_filter.update(value_delta)
+        self._value += self.low_pass_filter.value
 
-    def update_setpoint(self, setpoint: float):
-        self.pid_controller.setpoint = setpoint
+    def update_value(self, value: float):
+        self._value = value
 
     @property
     def value(self):
@@ -67,8 +52,6 @@ class Servo:
         return pwm_val
 
     def get_pwm(self):
-        self._update_value = self.pid_controller(self._value)
-        self._value += self._update_value
         return self._value_to_pwm()
 
 

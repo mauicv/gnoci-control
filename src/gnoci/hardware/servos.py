@@ -3,25 +3,19 @@ from gnoci.loop import Loop
 import time
 from gnoci.hardware.hardware import init_pca9685
 from gnoci.hardware.hardware import write_servos
-from gnoci.config import CONTROL_HZ, KP, KI, KD, FREQ, MAX_DELTA_V
+from gnoci.config import CONTROL_HZ, FREQ, MAX_DELTA_V
 
 
 class ServoController:
     def __init__(
             self,
             bus,
-            freq: int = FREQ,
-            kp: float = KP,
-            ki: float = KI,
-            kd: float = KD,
+            freq: int = CONTROL_HZ,
             control_hz: int = CONTROL_HZ,
             **kwargs
         ):
         super().__init__(**kwargs)
         generic_values = {
-            "kp": kp,
-            "ki": ki,
-            "kd": kd,
             "freq": freq,
             "control_hz": control_hz,
             "max_delta_v": MAX_DELTA_V,
@@ -60,14 +54,14 @@ class ServoController:
         self.servo_update_loop.start()
         self.last_servo_set_ts = time.time()
 
-    def update_setpoint_delta(self, values: list[float]):
+    def update_value_delta(self, values: list[float]):
         for servo_idx, value in zip(self.servo_map, values):
-            self.servos[servo_idx].update_setpoint_delta(value)
+            self.servos[servo_idx].update_value_delta(value)
         self.last_servo_set_ts = time.time()
 
-    def update_setpoint(self, values: list[float]):
+    def update_value(self, values: list[float]):
         for servo_idx, value in zip(self.servo_map, values):
-            self.servos[servo_idx].update_setpoint(value)
+            self.servos[servo_idx].update_value(value)
         self.last_servo_set_ts = time.time()
 
     def _write_servos(self):
