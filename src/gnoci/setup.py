@@ -17,7 +17,7 @@ class Gnoci:
         self.bus = bus
         self.policy = PolicyRunner(obs_dim=MODEL_INPUT_DIM)
         self.servo_controller = ServoController(bus=self.bus, freq=control_hz, control_hz=control_hz)
-        self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ, center_angles=center_angles)
+        self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ, control_hz=control_hz, center_angles=center_angles)
         self.memory = Memory(
             num_states=OBS_STACK_DIM,
             num_actions=ACTION_STACK_DIM,

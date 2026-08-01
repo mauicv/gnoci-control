@@ -1,4 +1,5 @@
 import time
+from gnoci.config import CONTROL_HZ
 from gnoci.filters.complementary import ComplementaryFilter
 from gnoci.filters.low_pass import LowPassFilter
 from gnoci.loop import Loop
@@ -45,6 +46,7 @@ class SensorReader:
             self,
             bus,
             freq=100,
+            control_hz=CONTROL_HZ,
             center_angles=True,
             apply_obs_norm=False,
             **kwargs
@@ -53,7 +55,9 @@ class SensorReader:
         self.freq = freq
         self.center_angles = center_angles
         self.apply_obs_norm = apply_obs_norm
-        self.c_filter = ComplementaryFilter(alpha=0.95)
+        # filters update once per control-rate data read, so use the fixed
+        # control-step dt like sim does rather than measuring time
+        self.c_filter = ComplementaryFilter(alpha=0.95, dt=1.0 / control_hz)
         self.acc_low_pass_filters = [LowPassFilter(alpha=0.2) for _ in range(3)]
         self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=0.3) for _ in range(10)]
         self.bus = bus

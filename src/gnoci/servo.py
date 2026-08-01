@@ -31,6 +31,10 @@ class Servo:
         value_delta = value_delta * self.action_scale
         self.low_pass_filter.update(value_delta)
         self._value += self.low_pass_filter.value
+        # clamp the stored setpoint like sim clips ctrl each step, so pushing
+        # against a limit saturates instead of winding up past pin_limits
+        if self._value > self.pin_limits[1]: self._value = self.pin_limits[1]
+        elif self._value < self.pin_limits[0]: self._value = self.pin_limits[0]
 
     def update_value(self, value: float):
         self._value = value
