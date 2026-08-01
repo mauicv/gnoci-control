@@ -35,8 +35,9 @@ with open('positioning_data.json', 'r') as f:
 
 class SensorReader:
     # left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
-    # sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
-    sensor_map = [0, 1, 2, 3, 4,  5, 6, 7, 8, 9]
+    # sensor_map = [7, 8, 5, 9, 6, 3, 4, 1, 2, 0] 
+    sensor_map = [7, 6, 5, 8, 9, 3, 4, 1, 2, 0]
+
     sensor_orientations = [-1, -1, -1, -1, -1,  1, 1, 1, 1, 1]
     rot_enc_sensor_configs = [SensorConfig(**sensor) for sensor in rot_enc_sensor_configs_data]
 
