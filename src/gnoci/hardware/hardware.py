@@ -24,7 +24,7 @@ device_map = {
         "adcs": [2, 3],
     },
     I2C_MUX_ADDR_2: {
-        "rot_encs": [2, 3, 4, 5, 7],
+        "rot_encs": [2, 3, 4, 5, 6],
         "adcs": [0, 1],
     },
 }
