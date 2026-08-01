@@ -9,22 +9,11 @@ from gnoci.hardware.hardware import (
     decode_foot_contact,
     init_mpu6050,
     init_adcs,
-    test_all
 )
 from dataclasses import dataclass
 import json
 import numpy as np
 
-
-_OBS_NORM = np.array(
-    [0.32] * 10             # joint positions  (already /pi, offset-removed)
-    + [3.5] * 10            # joint velocities (rad/s)
-    + [1.0] * 4             # binary foot contacts
-    + [1.4] * 3             # gyro  (already * IMU_GYRO_SCALE)
-    + [2.8] * 3             # accel (already / IMU_ACC_SCALE)
-    + [0.38] * 2,           # pitch, roll (rad)
-    dtype=np.float32,
-)
 
 @dataclass
 class SensorConfig:
@@ -46,7 +35,8 @@ with open('positioning_data.json', 'r') as f:
 
 class SensorReader:
     # left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
-    sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
+    # sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
+    sensor_map = [0, 1, 2, 3, 4,  5, 6, 7, 8, 9]
     sensor_orientations = [-1, -1, -1, -1, -1,  1, 1, 1, 1, 1]
     rot_enc_sensor_configs = [SensorConfig(**sensor) for sensor in rot_enc_sensor_configs_data]
 
@@ -198,8 +188,6 @@ class SensorReader:
             self.pitch,
             self.roll,
         ])
-        # if self.apply_obs_norm:
-        #     obs = np.array(obs) * _OBS_NORM
         return obs
 
     @property
