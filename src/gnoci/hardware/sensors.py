@@ -58,8 +58,8 @@ class SensorReader:
         # filters update once per control-rate data read, so use the fixed
         # control-step dt like sim does rather than measuring time
         self.c_filter = ComplementaryFilter(alpha=0.95, dt=1.0 / control_hz)
-        self.acc_low_pass_filters = [LowPassFilter(alpha=0.2) for _ in range(3)]
-        self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=0.3) for _ in range(10)]
+        self.acc_low_pass_filters = [LowPassFilter(alpha=1, warm_start=True) for _ in range(3)]
+        self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=1, warm_start=True) for _ in range(10)]
         self.bus = bus
         init_mpu6050(bus)
         try:

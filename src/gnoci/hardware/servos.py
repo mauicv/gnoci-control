@@ -3,7 +3,7 @@ from gnoci.loop import Loop
 import time
 from gnoci.hardware.hardware import init_pca9685
 from gnoci.hardware.hardware import write_servos
-from gnoci.config import CONTROL_HZ, FREQ, MAX_DELTA_V
+from gnoci.config import CONTROL_HZ, MAX_DELTA_V
 
 
 class ServoController:
