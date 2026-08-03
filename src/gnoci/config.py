@@ -20,7 +20,7 @@ SERVO_UNIT_RAD = 0.75 * math.pi
 
 # Max joint angular velocity in rad/s — must match gnoci-sim's MAX_JOINT_VEL
 # (the action-delta scale the policy was trained with).
-MAX_JOINT_VEL = 10.0
+MAX_JOINT_VEL = 6.0
 
 # Per-second setpoint delta limit in servo units, derived so a full action
 # moves the joint at MAX_JOINT_VEL rad/s, same as in sim.

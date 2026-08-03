@@ -68,6 +68,7 @@ class SensorReader:
             print(f"Error initializing ADCs: {e}")
 
         self.imu_raw = [0] * 6
+        self.imu_decoded = [0] * 6
         self.rot_enc_raw = [0] * 10
         self.adc_raw = [0] * 4
 
@@ -137,8 +138,8 @@ class SensorReader:
         return centered_angle
 
     def decode_hardware(self):
-        self.imu_raw = decode_imu(self.imu_raw)
-        gyro_data, acc_data = self.imu_raw[:3], self.imu_raw[3:]
+        self.imu_decoded = decode_imu(self.imu_raw)
+        gyro_data, acc_data = self.imu_decoded[:3], self.imu_decoded[3:]
         gyro_data = [gyro_data[i] / 250.0 for i in range(3)]
         acc_data = [self.acc_low_pass_filters[i].update(acc_data[i]) for i in range(3)]
         self.imu_data = [*gyro_data, *acc_data]
@@ -148,7 +149,7 @@ class SensorReader:
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
 
     def update_filters(self):
-        gyro_data, acc_data = self.imu_raw[:3], self.imu_raw[3:]
+        gyro_data, acc_data = self.imu_decoded[:3], self.imu_decoded[3:]
         self.c_filter.update(acc_data, gyro_data)
         self.pitch = self.c_filter.pitch
         self.roll = self.c_filter.roll

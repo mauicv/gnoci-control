@@ -42,7 +42,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
         gnoci.memory.add_action(action)
-        action = action * 0
+        action = action * 1
         gnoci.servo_controller.update_value_delta(action)
         actions.append(action.tolist())
         states.append(state.tolist())

@@ -74,6 +74,33 @@ def test_control_hz(limit=1000):
 
 
 @click.command()
+@click.option('--limit', type=int, default=10000)
+def test_imu(limit=10000):
+    ctl_hz = 10
+    from gnoci.setup import setup_gnoci_control
+
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus)
+    servo_controller = gnoci.servo_controller
+    sensor_reader = gnoci.sensor_reader
+    policy = gnoci.policy
+    perf_times = []
+    time.sleep(0.01)
+
+    # sensor_reader.deinit()
+    servo_controller.deinit()
+
+    print("\n\n\n\n")
+    servo_controller.update_value([0]*10)
+
+    for i in range(100000):
+        data = sensor_reader.data
+        pitch, roll = data[-2:]
+        print(f"pitch: {pitch:5.3f}, roll: {roll:5.3f}")
+        time.sleep(0.1)
+
+
+@click.command()
 def run_checks():
     from gnoci.setup import setup_gnoci_control
     bus = SMBus(1)
@@ -286,10 +313,19 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         action = gnoci.policy.predict(observation)
 
         action = np.zeros((10))
-        action[1] = np.sin(i / 50 * 2 * np.pi) / 25
-        action[6] = np.cos(i / 50 * 2 * np.pi) / 25
+        # state_data_1
+        # action[1] = np.sin(i / 50 * 2 * np.pi) / 10
+        # action[6] = np.cos(i / 50 * 2 * np.pi) / 10
+        # state_data_2
+        # action[2] = np.sin(i / 50 * 2 * np.pi) / 10
+        # action[7] = np.sin(i / 50 * 2 * np.pi) / 10
+        # state_data_3
+        # action[1] = np.sin(i / 50 * 2 * np.pi) / 10
+        # action[6] = np.cos(i / 50 * 2 * np.pi) / 10
+        # action[2] = np.sin(i / 50 * 2 * np.pi) / 10
+        # action[7] = np.sin(i / 50 * 2 * np.pi) / 10
 
-        state_data["states"].append(state)
+        state_data["states"].append(state.tolist())
         state_data["actions"].append(action.tolist())
         state_data["times"].append(time.perf_counter())
 
@@ -344,3 +380,41 @@ def orient(file_name: str, ctl_hz: int, configure_sensors: bool = True):
     # with open(file_name, 'w') as f:
     #     json.dump(state_data, f, indent=4)
 
+
+@click.command()
+@click.option('--overwrite', type=bool, default=False)
+def measure_imu_offsets(overwrite: bool = False):
+    from gnoci.setup import setup_gnoci_control
+    from gnoci.hardware.hardware import init_mpu6050, read_sensor_data, decode_imu
+    bus = SMBus(1)
+    init_mpu6050(bus)
+    time.sleep(0.01)
+
+    gyro_data = []
+    accel_data = []
+    sample_rate = 60
+    seconds = 3
+    for _ in tqdm(range(sample_rate*seconds)):
+        time_start = time.perf_counter()
+        imu_data, *_ = read_sensor_data(bus)
+        gx, gy, gz, ax, ay, az = decode_imu(imu_data)
+        gyro_data.append([gx, gy, gz])
+        accel_data.append([ax, ay, az])
+        elapsed = time.perf_counter() - time_start
+        if elapsed < 1.0 / sample_rate:
+            time.sleep(1.0 / sample_rate - elapsed)
+
+    gyro_data = np.array(gyro_data)
+    accel_data = np.array(accel_data)
+    gyro_mean = gyro_data.mean(axis=0)
+    accel_mean = accel_data.mean(axis=0) - np.array([0.0, 0.0, 1.0])
+
+    print(f"gyro mean: {gyro_mean}")
+    print(f"accel mean: {accel_mean}")
+
+    if overwrite:
+        with open('imu_offsets.json', 'w') as f:
+            json.dump({
+                "gyro_mean": gyro_mean.tolist(),
+                "accel_mean": accel_mean.tolist(),
+            }, f, indent=4)
