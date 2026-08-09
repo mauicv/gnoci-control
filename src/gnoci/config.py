@@ -25,3 +25,5 @@ MAX_JOINT_VEL = 6.0
 # Per-second setpoint delta limit in servo units, derived so a full action
 # moves the joint at MAX_JOINT_VEL rad/s, same as in sim.
 MAX_DELTA_V = MAX_JOINT_VEL / SERVO_UNIT_RAD
+
+ACTION_SCALE = 0.25 

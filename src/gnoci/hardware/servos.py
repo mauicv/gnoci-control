@@ -18,6 +18,7 @@ class ServoController:
         generic_values = {
             "control_hz": control_hz,
             "max_delta_v": MAX_DELTA_V,
+            "low_pass_filter_alpha": 0.4,
         }
 
         # TODO: asymetric in left_yoke__hip and right_yoke__hip reverse-True/False?

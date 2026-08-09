@@ -320,10 +320,10 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         # action[2] = np.sin(i / 50 * 2 * np.pi) / 10
         # action[7] = np.sin(i / 50 * 2 * np.pi) / 10
         # state_data_3
-        # action[1] = np.sin(i / 50 * 2 * np.pi) / 10
-        # action[6] = np.cos(i / 50 * 2 * np.pi) / 10
-        # action[2] = np.sin(i / 50 * 2 * np.pi) / 10
-        # action[7] = np.sin(i / 50 * 2 * np.pi) / 10
+        action[1] = np.sin(i / 50 * 2 * np.pi) / 10
+        action[6] = np.cos(i / 50 * 2 * np.pi) / 10
+        action[2] = np.sin(i / 50 * 2 * np.pi) / 10
+        action[7] = np.sin(i / 50 * 2 * np.pi) / 10
 
         state_data["states"].append(state.tolist())
         state_data["actions"].append(action.tolist())

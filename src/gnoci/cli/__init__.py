@@ -57,8 +57,9 @@ except ImportError as error:
 
 
 try:
-    from gnoci.cli.data_collection import record_data
+    from gnoci.cli.data_collection import record_data, test_policy_actions
     cli.add_command(record_data)
+    cli.add_command(test_policy_actions)
 except ImportError as error:
     logger.error(error)
     raise error

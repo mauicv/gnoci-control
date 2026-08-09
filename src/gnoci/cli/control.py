@@ -3,7 +3,7 @@ import os
 import numpy as np
 import time
 from gnoci.net_util.channel import Channel
-from gnoci.config import CONTROL_HZ
+from gnoci.config import CONTROL_HZ, ACTION_SCALE
 
 _has_i2c = os.path.exists('/dev/i2c-1')
 if _has_i2c:
@@ -42,8 +42,9 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
         gnoci.memory.add_action(action)
-        action = action * 1
-        gnoci.servo_controller.update_value_delta(action)
+        action = action * 0.2
+        action = action * ACTION_SCALE
+        gnoci.servo_controller.update_value(action)
         actions.append(action.tolist())
         states.append(state.tolist())
 
