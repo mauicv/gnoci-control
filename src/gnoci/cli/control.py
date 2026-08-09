@@ -42,7 +42,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
         gnoci.memory.add_action(action)
-        action = action * 0.2
+        action = action * 0.0
         action = action * ACTION_SCALE
         gnoci.servo_controller.update_value(action)
         actions.append(action.tolist())
@@ -54,7 +54,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
 
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
-    time.sleep(3)
+    time.sleep(1.5)
 
     import json
     with open('rollout.json', 'w') as f:

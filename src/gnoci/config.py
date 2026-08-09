@@ -26,4 +26,4 @@ MAX_JOINT_VEL = 6.0
 # moves the joint at MAX_JOINT_VEL rad/s, same as in sim.
 MAX_DELTA_V = MAX_JOINT_VEL / SERVO_UNIT_RAD
 
-ACTION_SCALE = 0.25 
+ACTION_SCALE = (0.25 / SERVO_UNIT_RAD)
