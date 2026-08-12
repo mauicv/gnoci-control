@@ -24,6 +24,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
+    from gnoci.filters.low_pass import LowPassFilter
 
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus, control_hz=ctl_hz)
@@ -34,6 +35,8 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
     actions = []
     states = []
 
+    low_pass_filter = LowPassFilter(alpha=0.75, warm_start=False)
+
     def _tick():
         time_start = time.perf_counter()
 
@@ -42,7 +45,8 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
         gnoci.memory.add_action(action)
-        action = action * 0.0
+        action = low_pass_filter.update(action)
+        # action = action * 0.0
         action = action * ACTION_SCALE
         gnoci.servo_controller.update_value(action)
         actions.append(action.tolist())
@@ -52,9 +56,10 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         if elapsed > 1.0 / ctl_hz:
             print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
 
+    time.sleep(10)
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
-    time.sleep(1.5)
+    time.sleep(6)
 
     import json
     with open('rollout.json', 'w') as f:
