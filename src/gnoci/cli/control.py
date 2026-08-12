@@ -3,7 +3,7 @@ import os
 import numpy as np
 import time
 from gnoci.net_util.channel import Channel
-from gnoci.config import CONTROL_HZ
+from gnoci.config import CONTROL_HZ, ACTION_SCALE
 
 _has_i2c = os.path.exists('/dev/i2c-1')
 if _has_i2c:
@@ -24,12 +24,18 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
     from gnoci.setup import setup_gnoci_control
     from gnoci.predict import PolicyRunner
     from gnoci.loop import Loop
+    from gnoci.filters.low_pass import LowPassFilter
 
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus, control_hz=ctl_hz)
     if configure_sensors:
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
+
+    actions = []
+    states = []
+
+    low_pass_filter = LowPassFilter(alpha=0.75, warm_start=False)
 
     def _tick():
         time_start = time.perf_counter()
@@ -38,15 +44,26 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         gnoci.memory.add_state(state)
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
-        # print(f"action: {action}")
         gnoci.memory.add_action(action)
-        action = action * 0
-        gnoci.servo_controller.update_setpoint_delta(action)
+        action = low_pass_filter.update(action)
+        # action = action * 0.0
+        action = action * ACTION_SCALE
+        gnoci.servo_controller.update_value(action)
+        actions.append(action.tolist())
+        states.append(state.tolist())
 
         elapsed = time.perf_counter() - time_start
         if elapsed > 1.0 / ctl_hz:
             print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
 
+    time.sleep(10)
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
-    time.sleep(10)
+    time.sleep(6)
+
+    import json
+    with open('rollout.json', 'w') as f:
+        json.dump({
+            'actions': actions,
+            'states': states,
+        }, f)

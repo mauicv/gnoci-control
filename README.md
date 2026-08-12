@@ -30,17 +30,17 @@
 left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
 
 [
-      "head__left_yoke",
-      "left_yoke__hip",
-      "left_hip__upper_leg",
-      "left_upper_leg__lower_leg",
-      "left_lower_leg__foot",
-      "head__right_yoke",
-      "right_yoke__hip",
-      "right_hip__upper_leg",
-      "right_upper_leg__lower_leg",
-      "right_lower_leg__foot",
-  ]
+    "head__left_yoke",
+    "left_yoke__hip",
+    "left_hip__upper_leg",
+    "left_upper_leg__lower_leg",
+    "left_lower_leg__foot",
+    "head__right_yoke",
+    "right_yoke__hip",
+    "right_hip__upper_leg",
+    "right_upper_leg__lower_leg",
+    "right_lower_leg__foot",
+]
 
 
 

@@ -31,7 +31,9 @@ try:
         test_hardware,
         measure_response,
         record_states,
-        orient
+        orient,
+        test_imu,
+        measure_imu_offsets,
     )
     cli.add_command(run_checks)
     cli.add_command(test_control_hz)
@@ -40,6 +42,8 @@ try:
     cli.add_command(measure_response)
     cli.add_command(record_states)
     cli.add_command(orient)
+    cli.add_command(test_imu)
+    cli.add_command(measure_imu_offsets)
 except ImportError as error:
     logger.error(error)
     raise error
@@ -53,8 +57,9 @@ except ImportError as error:
 
 
 try:
-    from gnoci.cli.data_collection import record_data
+    from gnoci.cli.data_collection import record_data, test_policy_actions
     cli.add_command(record_data)
+    cli.add_command(test_policy_actions)
 except ImportError as error:
     logger.error(error)
     raise error

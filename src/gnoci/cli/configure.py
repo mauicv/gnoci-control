@@ -53,7 +53,7 @@ def test_control_hz(limit=1000):
     servo_controller.deinit()
 
     print("\n\n\n\n")
-    servo_controller.update_setpoint([0]*10)
+    servo_controller.update_value([0]*10)
 
     for i in range(limit):
         start = time.perf_counter()
@@ -74,6 +74,33 @@ def test_control_hz(limit=1000):
 
 
 @click.command()
+@click.option('--limit', type=int, default=10000)
+def test_imu(limit=10000):
+    ctl_hz = 10
+    from gnoci.setup import setup_gnoci_control
+
+    bus = SMBus(1)
+    gnoci = setup_gnoci_control(bus=bus)
+    servo_controller = gnoci.servo_controller
+    sensor_reader = gnoci.sensor_reader
+    policy = gnoci.policy
+    perf_times = []
+    time.sleep(0.01)
+
+    # sensor_reader.deinit()
+    servo_controller.deinit()
+
+    print("\n\n\n\n")
+    servo_controller.update_value([0]*10)
+
+    for i in range(100000):
+        data = sensor_reader.data
+        pitch, roll = data[-2:]
+        print(f"pitch: {pitch:5.3f}, roll: {roll:5.3f}")
+        time.sleep(0.1)
+
+
+@click.command()
 def run_checks():
     from gnoci.setup import setup_gnoci_control
     bus = SMBus(1)
@@ -88,37 +115,37 @@ def run_checks():
         print(f'range test servo: {servo.name}:')
         servo_initial_value = servo.value
         for value in np.linspace(-1, 1, 10):
-            servo.update_setpoint(value)
+            servo.update_value(value)
             time.sleep(0.1)
-        servo.update_setpoint(servo_initial_value)
+        servo.update_value(servo_initial_value)
         time.sleep(0.01)
         print(f'value: {servo_initial_value}, pwm: {servo.get_pwm()}')
 
 
 def detect_joint_range(servo, sensor_reader, joint_name: str):
     r_d = []
-    servo.update_setpoint(0.0)
+    servo.update_value(0.0)
     time.sleep(1)
     sensor_reader._read_hardware()
     sensor_reader.decode_hardware()
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
-    servo.update_setpoint(-1)
+    servo.update_value(-1)
     time.sleep(1)
     sensor_reader._read_hardware()
     sensor_reader.decode_hardware()
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
-    servo.update_setpoint(1)
+    servo.update_value(1)
     time.sleep(1)
     sensor_reader._read_hardware()
     sensor_reader.decode_hardware()
     r_d.append(sensor_reader.rot_enc_data)
     time.sleep(1)
 
-    servo.update_setpoint(0.0)
+    servo.update_value(0.0)
     time.sleep(1)
 
     max_diff = 0
@@ -203,7 +230,7 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
 
         for i in range(100):
             time_start = time.perf_counter()
-            servo.update_setpoint_delta(action)
+            servo.update_value_delta(action)
             state = gnoci.sensor_reader.data
 
             response_data["angular_pos"].append(state[index])
@@ -216,7 +243,7 @@ def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, 
             else:
                 print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
 
-        servo.update_setpoint(0)
+        servo.update_value(0)
         time.sleep(0.5)
 
     return response_data
@@ -236,7 +263,7 @@ def measure_response(file_name: str, center_angles: bool, ctl_hz: int, configure
         total_drift, average_drift = gnoci.configure_sensors()
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
     
-    gnoci.servo_controller.update_setpoint([0.0]*10)
+    gnoci.servo_controller.update_value([0.0]*10)
     time.sleep(1)
     response_data = []
     for action in [-1, -0.25, -0.1, -0.05, 0.05, 0.1, 0.25, 1]:
@@ -286,15 +313,24 @@ def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_se
         action = gnoci.policy.predict(observation)
 
         action = np.zeros((10))
-        action[1] = np.sin(i / 50 * 2 * np.pi) / 25
-        action[6] = np.cos(i / 50 * 2 * np.pi) / 25
+        # state_data_1
+        # action[1] = np.sin(i / 50 * 2 * np.pi) / 10
+        # action[6] = np.cos(i / 50 * 2 * np.pi) / 10
+        # state_data_2
+        # action[2] = np.sin(i / 50 * 2 * np.pi) / 10
+        # action[7] = np.sin(i / 50 * 2 * np.pi) / 10
+        # state_data_3
+        action[1] = np.sin(i / 50 * 2 * np.pi) / 10
+        action[6] = np.cos(i / 50 * 2 * np.pi) / 10
+        action[2] = np.sin(i / 50 * 2 * np.pi) / 10
+        action[7] = np.sin(i / 50 * 2 * np.pi) / 10
 
-        state_data["states"].append(state)
+        state_data["states"].append(state.tolist())
         state_data["actions"].append(action.tolist())
         state_data["times"].append(time.perf_counter())
 
         gnoci.memory.add_action(action)
-        gnoci.servo_controller.update_setpoint_delta(action)
+        gnoci.servo_controller.update_value_delta(action)
 
         elapsed = time.perf_counter() - time_start
         if elapsed < 1.0 / ctl_hz:
@@ -332,7 +368,7 @@ def orient(file_name: str, ctl_hz: int, configure_sensors: bool = True):
         print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
 
     action = np.zeros((10))
-    gnoci.servo_controller.update_setpoint(action)
+    gnoci.servo_controller.update_value(action)
     while True:
         time_start = time.perf_counter()
         state = gnoci.sensor_reader.data
@@ -344,3 +380,41 @@ def orient(file_name: str, ctl_hz: int, configure_sensors: bool = True):
     # with open(file_name, 'w') as f:
     #     json.dump(state_data, f, indent=4)
 
+
+@click.command()
+@click.option('--overwrite', type=bool, default=False)
+def measure_imu_offsets(overwrite: bool = False):
+    from gnoci.setup import setup_gnoci_control
+    from gnoci.hardware.hardware import init_mpu6050, read_sensor_data, decode_imu
+    bus = SMBus(1)
+    init_mpu6050(bus)
+    time.sleep(0.01)
+
+    gyro_data = []
+    accel_data = []
+    sample_rate = 60
+    seconds = 3
+    for _ in tqdm(range(sample_rate*seconds)):
+        time_start = time.perf_counter()
+        imu_data, *_ = read_sensor_data(bus)
+        gx, gy, gz, ax, ay, az = decode_imu(imu_data)
+        gyro_data.append([gx, gy, gz])
+        accel_data.append([ax, ay, az])
+        elapsed = time.perf_counter() - time_start
+        if elapsed < 1.0 / sample_rate:
+            time.sleep(1.0 / sample_rate - elapsed)
+
+    gyro_data = np.array(gyro_data)
+    accel_data = np.array(accel_data)
+    gyro_mean = gyro_data.mean(axis=0)
+    accel_mean = accel_data.mean(axis=0) - np.array([0.0, 0.0, 1.0])
+
+    print(f"gyro mean: {gyro_mean}")
+    print(f"accel mean: {accel_mean}")
+
+    if overwrite:
+        with open('imu_offsets.json', 'w') as f:
+            json.dump({
+                "gyro_mean": gyro_mean.tolist(),
+                "accel_mean": accel_mean.tolist(),
+            }, f, indent=4)

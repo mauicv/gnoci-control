@@ -3,6 +3,21 @@ import time
 import struct
 import math
 import threading as th
+import json
+import numpy as np
+
+GYRO_OFFSET = np.array([0.0, 0.0, 0.0])
+ACC_OFFSET = np.array([0.0, 0.0, 0.0])
+
+try:
+    with open('imu_offsets.json', 'r') as f:
+        imu_offsets = json.load(f)
+        GYRO_OFFSET = np.array(imu_offsets['gyro_mean'])
+        ACC_OFFSET = np.array(imu_offsets['accel_mean'])
+        print(f"IMU offsets loaded from file: gyro_mean: {GYRO_OFFSET}, accel_mean: {ACC_OFFSET}")
+except FileNotFoundError:
+    raise ValueError("No IMU offsets file found, run `python -m gnoci.cli.configure measure-imu-offsets` to measure and save offsets")
+
 
 IMU_ADDR = 0x68
 I2C_MUX_ADDR_1 = 0x70
@@ -24,7 +39,7 @@ device_map = {
         "adcs": [2, 3],
     },
     I2C_MUX_ADDR_2: {
-        "rot_encs": [2, 3, 4, 5, 7],
+        "rot_encs": [2, 3, 4, 5, 6],
         "adcs": [0, 1],
     },
 }
@@ -103,8 +118,8 @@ def decode_imu(raw):
         val = struct.unpack('>h', bytes(raw[i:i+2]))[0]
         vals.append(val)
     # vals = [ax, ay, az, temp, gx, gy, gz]
-    ax, ay, az = [v / (16384.0) for v in vals[0:3]]  # ±2g default
-    gx, gy, gz = [v / (131.0) for v in vals[4:7]]   # ±250°/s default (1 is 250 deg/s)
+    ax, ay, az = [(v / 16384.0) - ACC_OFFSET[i] for i, v in enumerate(vals[0:3])]  # ±2g default
+    gx, gy, gz = [(v / 131.0) - GYRO_OFFSET[i] for i, v in enumerate(vals[4:7])]   # ±250°/s default (1 is 250 deg/s)
     return gx, gy, gz, ax, ay, az
 
 def decode_angle(raw):
@@ -180,7 +195,7 @@ if __name__ == "__main__":
 
     while True:
         start = time.perf_counter()
-        imu_raw, rot_enc_data, adc_data = read_sensor_data()
+        imu_raw, rot_enc_data, adc_data = read_sensor_data(bus)
         elapsed = (time.perf_counter() - start) * 1000
 
         imu_data = decode_imu(imu_raw)
