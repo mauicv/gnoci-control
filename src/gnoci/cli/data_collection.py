@@ -2,7 +2,7 @@ import click
 import os
 import numpy as np
 import time
-from gnoci.config import MODEL_INPUT_DIM, CONTROL_HZ
+from gnoci.config import MODEL_INPUT_DIM, CONTROL_HZ, ACTION_SCALE
 from gnoci.data_collection.action_ds_interface import ActionDSInterface
 from gnoci.setup import Gnoci
 import json
@@ -77,6 +77,7 @@ def record_data(file_name: str, center_angles: bool, ctl_hz: int, configure_sens
 @click.command()
 def test_policy_actions():
     from gnoci.setup import setup_gnoci_control
+    from gnoci.filters.low_pass import LowPassFilter
     import json
     bus = SMBus(1)
     ctrl_hz = 50
@@ -86,17 +87,22 @@ def test_policy_actions():
     print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
 
     with open('rollout_1.json', 'r') as f:
-        actions = json.load(f)['target_actions']
+        actions = json.load(f)['actions']
     
     real_states = []
     pbar = tqdm(total=len(actions))
+    low_pass_filter = LowPassFilter(alpha=0.75, warm_start=False)
 
     gnoci.servo_controller.update_value(np.zeros(10))
+    used_actions = []
     for action in tqdm(actions):
         time_start = time.perf_counter()
+        action = low_pass_filter.update(action)
+        action = action * ACTION_SCALE
         gnoci.servo_controller.update_value(action)
         state = gnoci.sensor_reader.data
         real_states.append(state.tolist())
+        used_actions.append(action.tolist())
         elapsed = time.perf_counter() - time_start
         if elapsed < 1.0 / ctrl_hz:
             time.sleep(1.0 / ctrl_hz - elapsed)
@@ -110,6 +116,6 @@ def test_policy_actions():
 
     with open('rollout_2.json', 'w') as f:
         json.dump({
-            'actions': actions,
+            'actions': used_actions,
             'states': real_states,
         }, f, indent=4)
