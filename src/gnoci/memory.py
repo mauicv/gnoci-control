@@ -28,3 +28,11 @@ class Memory:
             return np.concatenate((obs, actions))
         else:
             return obs
+
+    def reset(self):
+        self.states.clear()
+        self.actions.clear()
+        for i in range(self.num_actions):
+            self.actions.append(np.zeros(self.action_dim))
+        for i in range(self.num_states):
+            self.states.append(np.zeros(self.state_dim))

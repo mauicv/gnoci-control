@@ -40,13 +40,31 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         action = gnoci.policy.predict(observation)
         # print(f"action: {action}")
         gnoci.memory.add_action(action)
-        action = action * 0
-        gnoci.servo_controller.update_setpoint_delta(action)
+
+        action = low_pass_filter.update(action)
+        # action = action * 0.0
+        # action = action.clip(-1, 1)
+        action = action * ACTION_SCALE
+        gnoci.servo_controller.update_value(action)
+        actions.append(action.tolist())
+        states.append(state.tolist())
 
         elapsed = time.perf_counter() - time_start
         if elapsed > 1.0 / ctl_hz:
             print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
 
+    time.sleep(10)
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
-    time.sleep(10)
+    time.sleep(3)
+    loop.stop()
+    time.sleep(1)
+    gnoci.reset()
+    time.sleep(1)
+
+    import json
+    with open('rollout.json', 'w') as f:
+        json.dump({
+            'actions': actions,
+            'states': states,
+        }, f)

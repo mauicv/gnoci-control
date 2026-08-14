@@ -45,6 +45,16 @@ class Gnoci:
         time.sleep(0.1)
         return total_drift, average_drift
 
+    def reset(self):
+        self.servo_controller.update_value([0.0]*10)
+        print('resetting servos')
+        time.sleep(0.5)
+        self.sensor_reader.reset_filters()
+        print('resetting filters')
+        self.memory.reset()
+        print('resetting memory')
+        time.sleep(1)
+
 
 def setup_gnoci_control(
     bus: smbus.SMBus,

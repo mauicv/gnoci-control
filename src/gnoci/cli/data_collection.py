@@ -71,4 +71,46 @@ def record_data(file_name: str, center_angles: bool, ctl_hz: int, configure_sens
     time.sleep(2)
 
     with open(file_name, 'w') as f:
+
         json.dump(sysid_data, f, indent=4)
+
+
+@click.command()
+def test_policy_actions():
+    from gnoci.setup import setup_gnoci_control
+    import json
+    bus = SMBus(1)
+    ctrl_hz = 50
+    gnoci = setup_gnoci_control(bus=bus, center_angles=True, control_hz=ctrl_hz)
+
+    total_drift, average_drift = gnoci.configure_sensors()
+    print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
+
+    with open('rollout_1.json', 'r') as f:
+        actions = json.load(f)['target_actions']
+    
+    real_states = []
+    pbar = tqdm(total=len(actions))
+
+    gnoci.servo_controller.update_value(np.zeros(10))
+    for action in tqdm(actions):
+        time_start = time.perf_counter()
+        gnoci.servo_controller.update_value(action)
+        state = gnoci.sensor_reader.data
+        real_states.append(state.tolist())
+        elapsed = time.perf_counter() - time_start
+        if elapsed < 1.0 / ctrl_hz:
+            time.sleep(1.0 / ctrl_hz - elapsed)
+
+        pbar.update(1)
+
+    pbar.close()
+    
+    gnoci.servo_controller.update_value(np.zeros(10))
+    time.sleep(2)
+
+    with open('rollout_2.json', 'w') as f:
+        json.dump({
+            'actions': actions,
+            'states': real_states,
+        }, f, indent=4)
