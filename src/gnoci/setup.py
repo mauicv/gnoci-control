@@ -1,12 +1,10 @@
 import time
-from gnoci.servo import Servo, DummyServo
 import smbus2 as smbus
 from gnoci.hardware import SensorReader
 from gnoci.hardware import ServoController
 from gnoci.predict import PolicyRunner
-from gnoci.loop import Loop
 from gnoci.memory import Memory
-from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STACK_DIM, MODEL_INPUT_DIM, FREQ, KP, KI, KD, CONTROL_HZ
+from gnoci.config import OBSERVATION_DIM, ACTION_DIM, OBS_STACK_DIM, ACTION_STACK_DIM, MODEL_INPUT_DIM, FREQ, CONTROL_HZ
 
 
 class Gnoci:
@@ -18,8 +16,8 @@ class Gnoci:
         ):
         self.bus = bus
         self.policy = PolicyRunner(obs_dim=MODEL_INPUT_DIM)
-        self.servo_controller = ServoController(bus=self.bus, freq=FREQ, kp=KP, ki=KI, kd=KD, control_hz=control_hz)
-        self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ, center_angles=center_angles)
+        self.servo_controller = ServoController(bus=self.bus, freq=control_hz, control_hz=control_hz)
+        self.sensor_reader = SensorReader(bus=self.bus, freq=FREQ, control_hz=control_hz, center_angles=center_angles)
         self.memory = Memory(
             num_states=OBS_STACK_DIM,
             num_actions=ACTION_STACK_DIM,
@@ -31,7 +29,7 @@ class Gnoci:
     def configure_sensors(self):
         self.sensor_reader.center_angles = False
         self.sensor_reader.apply_obs_norm = False
-        self.servo_controller.update_setpoint([0.0]*10)
+        self.servo_controller.update_value([0.0]*10)
         time.sleep(0.5)
         center_angles = self.sensor_reader.data[0:10]
         total_drift = 0.0
@@ -42,6 +40,10 @@ class Gnoci:
             sensor.center = center_angles[sensor.index]
         self.sensor_reader.center_angles = True
         self.sensor_reader.apply_obs_norm = True
+        # the data read above stored uncentered positions as prev_rot_enc_data;
+        # reset so the first control tick reports zero velocity instead of a
+        # centered-minus-uncentered spike
+        self.sensor_reader.reset_filters()
         time.sleep(0.1)
         return total_drift, average_drift
 

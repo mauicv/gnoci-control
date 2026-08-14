@@ -1,4 +1,5 @@
 import time
+from gnoci.config import CONTROL_HZ
 from gnoci.filters.complementary import ComplementaryFilter
 from gnoci.filters.low_pass import LowPassFilter
 from gnoci.loop import Loop
@@ -9,22 +10,11 @@ from gnoci.hardware.hardware import (
     decode_foot_contact,
     init_mpu6050,
     init_adcs,
-    test_all
 )
 from dataclasses import dataclass
 import json
 import numpy as np
 
-
-_OBS_NORM = np.array(
-    [0.32] * 10             # joint positions  (already /pi, offset-removed)
-    + [3.5] * 10            # joint velocities (rad/s)
-    + [1.0] * 4             # binary foot contacts
-    + [1.4] * 3             # gyro  (already * IMU_GYRO_SCALE)
-    + [2.8] * 3             # accel (already / IMU_ACC_SCALE)
-    + [0.38] * 2,           # pitch, roll (rad)
-    dtype=np.float32,
-)
 
 @dataclass
 class SensorConfig:
@@ -46,7 +36,9 @@ with open('positioning_data.json', 'r') as f:
 
 class SensorReader:
     # left the right -> head__..._yoke, yoke__hip, hip__upper_leg, upper_leg__lower_leg, lower_leg__foot
-    sensor_map = [7, 8, 5, 9, 6,  3, 4, 1, 2, 0]
+    # sensor_map = [7, 8, 5, 9, 6, 3, 4, 1, 2, 0] 
+    sensor_map = [7, 6, 5, 8, 9, 3, 4, 1, 2, 0]
+
     sensor_orientations = [-1, -1, -1, -1, -1,  1, 1, 1, 1, 1]
     rot_enc_sensor_configs = [SensorConfig(**sensor) for sensor in rot_enc_sensor_configs_data]
 
@@ -54,6 +46,7 @@ class SensorReader:
             self,
             bus,
             freq=100,
+            control_hz=CONTROL_HZ,
             center_angles=True,
             apply_obs_norm=False,
             **kwargs
@@ -62,9 +55,11 @@ class SensorReader:
         self.freq = freq
         self.center_angles = center_angles
         self.apply_obs_norm = apply_obs_norm
-        self.c_filter = ComplementaryFilter(alpha=0.95)
-        self.acc_low_pass_filters = [LowPassFilter(alpha=0.2) for _ in range(3)]
-        self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=0.3) for _ in range(10)]
+        # filters update once per control-rate data read, so use the fixed
+        # control-step dt like sim does rather than measuring time
+        self.c_filter = ComplementaryFilter(alpha=0.95, dt=1.0 / control_hz)
+        self.acc_low_pass_filters = [LowPassFilter(alpha=1, warm_start=True) for _ in range(3)]
+        self.angular_velocities_low_pass_filters = [LowPassFilter(alpha=1, warm_start=True) for _ in range(10)]
         self.bus = bus
         init_mpu6050(bus)
         try:
@@ -73,6 +68,7 @@ class SensorReader:
             print(f"Error initializing ADCs: {e}")
 
         self.imu_raw = [0] * 6
+        self.imu_decoded = [0] * 6
         self.rot_enc_raw = [0] * 10
         self.adc_raw = [0] * 4
 
@@ -86,6 +82,7 @@ class SensorReader:
         self.rot_enc_prev = [None] * 10
 
         self.angular_velocities = [0.0] * 10
+        self._vel_ts_prev = time.perf_counter()
 
         self.pitch = 0
         self.roll = 0
@@ -141,8 +138,8 @@ class SensorReader:
         return centered_angle
 
     def decode_hardware(self):
-        self.imu_raw = decode_imu(self.imu_raw)
-        gyro_data, acc_data = self.imu_raw[:3], self.imu_raw[3:]
+        self.imu_decoded = decode_imu(self.imu_raw)
+        gyro_data, acc_data = self.imu_decoded[:3], self.imu_decoded[3:]
         gyro_data = [gyro_data[i] / 250.0 for i in range(3)]
         acc_data = [self.acc_low_pass_filters[i].update(acc_data[i]) for i in range(3)]
         self.imu_data = [*gyro_data, *acc_data]
@@ -152,18 +149,27 @@ class SensorReader:
         self.adc_data = [decode_foot_contact(item) for item in self.adc_raw]
 
     def update_filters(self):
-        gyro_data, acc_data = self.imu_raw[:3], self.imu_raw[3:]
+        gyro_data, acc_data = self.imu_decoded[:3], self.imu_decoded[3:]
         self.c_filter.update(acc_data, gyro_data)
         self.pitch = self.c_filter.pitch
         self.roll = self.c_filter.roll
 
     def derive_angular_velocities(self):
+        # dt must span the interval between successive data-property reads (the
+        # control rate), not the faster hardware-loop interval, or velocities
+        # are inflated by FREQ/CONTROL_HZ
+        now = time.perf_counter()
         if self.prev_rot_enc_data is None:
             self.prev_rot_enc_data = self.rot_enc_data
+            self._vel_ts_prev = now
             self.angular_velocities = [0.0] * 10
             return
+        dt = now - self._vel_ts_prev
+        self._vel_ts_prev = now
+        # encoder units are pi-rad (decode_angle maps one revolution to [-1, 1]),
+        # so scale by pi to get rad/s, matching sim's raw qvel observations
         self.angular_velocities = [
-            (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (self._hw_read_dt + 1e-8) for i in range(10)
+            np.pi * (self.rot_enc_data[i] - self.prev_rot_enc_data[i]) / (dt + 1e-8) for i in range(10)
         ]
         self.angular_velocities = [self.angular_velocities_low_pass_filters[i].update(v) for i, v in enumerate(self.angular_velocities)]
         self.prev_rot_enc_data = self.rot_enc_data
@@ -185,11 +191,9 @@ class SensorReader:
             *self.angular_velocities,
             *self.adc_data,
             *self.imu_data,
-            self.roll,
             self.pitch,
-        ]) 
-        if self.apply_obs_norm:
-            obs = np.array(obs) * _OBS_NORM
+            self.roll,
+        ])
         return obs
 
     @property
