@@ -97,7 +97,7 @@ def test_policy_actions():
     used_actions = []
     for action in tqdm(actions):
         time_start = time.perf_counter()
-        action = low_pass_filter.update(action)
+        action = low_pass_filter.update(np.array(action))
         action = action * ACTION_SCALE
         gnoci.servo_controller.update_value(action)
         state = gnoci.sensor_reader.data

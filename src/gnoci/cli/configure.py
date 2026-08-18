@@ -43,6 +43,9 @@ def test_control_hz(limit=1000):
 
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus)
+    total_drift, average_drift = gnoci.configure_sensors()
+    print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
+
     servo_controller = gnoci.servo_controller
     sensor_reader = gnoci.sensor_reader
     policy = gnoci.policy

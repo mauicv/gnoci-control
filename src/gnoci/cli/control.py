@@ -47,7 +47,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         gnoci.memory.add_action(action)
 
         action = low_pass_filter.update(action)
-        # action = action * 0.0
+        action = action * 0.7
         action = action * ACTION_SCALE
         gnoci.servo_controller.update_value(action)
         actions.append(action.tolist())
@@ -60,7 +60,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
     time.sleep(10)
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
-    time.sleep(3)
+    time.sleep(10)
     loop.stop()
     time.sleep(1)
     gnoci.reset()
