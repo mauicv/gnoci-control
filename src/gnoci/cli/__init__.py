@@ -20,7 +20,7 @@ try:
     cli.add_command(start)
 except ImportError as error:
     logger.error(error)
-    raise error
+    # raise error
 
 
 try:
@@ -46,14 +46,14 @@ try:
     cli.add_command(measure_imu_offsets)
 except ImportError as error:
     logger.error(error)
-    raise error
+    # raise error
 
 try:
     from gnoci.cli.storage import storage
     cli.add_command(storage)
 except ImportError as error:
     logger.error(error)
-    raise error
+    # raise error
 
 
 try:
@@ -62,7 +62,7 @@ try:
     cli.add_command(test_policy_actions)
 except ImportError as error:
     logger.error(error)
-    raise error
+    # raise error
 
 
 if __name__ == "__main__":

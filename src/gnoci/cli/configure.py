@@ -213,136 +213,6 @@ def test_hardware():
     test_all(bus)
 
 
-def run_response_recording(gnoci, joint_name: str, file_name: str, ctl_hz: int, action: float):
-
-    for servo in gnoci.servo_controller.iter_servos():
-        if isinstance(servo, DummyServo):
-            continue
-        if joint_name is not None and servo.name != joint_name:
-            continue
-        print(f'recording response for servo: {servo.name}:')
-        index = gnoci.sensor_reader.sensor_index_from_name(servo.name)
-
-        response_data = {
-            "joint_name": joint_name,
-            "action": action,
-            "angular_pos": [],
-            "angular_vel": [],
-            "time": [],
-        }
-
-        for i in range(100):
-            time_start = time.perf_counter()
-            servo.update_value_delta(action)
-            state = gnoci.sensor_reader.data
-
-            response_data["angular_pos"].append(state[index])
-            response_data["angular_vel"].append(state[index + 10])
-            response_data["time"].append(time.perf_counter())
-
-            elapsed = time.perf_counter() - time_start
-            if elapsed < 1.0 / ctl_hz:
-                time.sleep(1.0 / ctl_hz - elapsed)
-            else:
-                print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
-
-        servo.update_value(0)
-        time.sleep(0.5)
-
-    return response_data
-
-
-
-@click.command()
-@click.option('--file-name', type=str, default='response_data.json')
-@click.option('--center-angles', type=bool, default=True)
-@click.option('--ctl-hz', type=int, default=CONTROL_HZ)
-@click.option('--configure-sensors', type=bool, default=True)
-def measure_response(file_name: str, center_angles: bool, ctl_hz: int, configure_sensors: bool = True):
-    from gnoci.setup import setup_gnoci_control
-    bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, center_angles=center_angles, control_hz=ctl_hz)
-    if configure_sensors:
-        total_drift, average_drift = gnoci.configure_sensors()
-        print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
-    
-    gnoci.servo_controller.update_value([0.0]*10)
-    time.sleep(1)
-    response_data = []
-    for action in [-1, -0.25, -0.1, -0.05, 0.05, 0.1, 0.25, 1]:
-        for joint_name in [
-                # "head__left_yoke",
-                # "left_yoke__hip",
-                "left_hip__upper_leg",
-                # "left_upper_leg__lower_leg",
-                # "left_lower_leg__foot",
-                # "head__right_yoke",
-                # "right_yoke__hip",
-                # "right_hip__upper_leg",
-                # "right_upper_leg__lower_leg",
-                # "right_lower_leg__foot",
-            ]:
-            response_data.append(run_response_recording(gnoci, joint_name, file_name, ctl_hz, action))
-
-    with open(file_name, 'w') as f:
-        json.dump(response_data, f, indent=4)
-
-
-@click.command()
-@click.option('--file-name', type=str, default='state_data.json')
-@click.option('--center-angles', type=bool, default=True)
-@click.option('--ctl-hz', type=int, default=CONTROL_HZ)
-@click.option('--configure-sensors', type=bool, default=True)
-def record_states(file_name: str, center_angles: bool, ctl_hz: int, configure_sensors: bool = True):
-    from gnoci.setup import setup_gnoci_control
-    bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, center_angles=center_angles, control_hz=ctl_hz)
-    if configure_sensors:
-        total_drift, average_drift = gnoci.configure_sensors()
-        print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
-
-    state_data = {
-        "states": [],
-        "actions": [],
-        "times": [],
-    }
-
-    for i in tqdm(range(500)):
-        time_start = time.perf_counter()
-
-        state = gnoci.sensor_reader.data
-        gnoci.memory.add_state(state)
-        observation = gnoci.memory.get_observation()
-        action = gnoci.policy.predict(observation)
-
-        action = np.zeros((10))
-        # state_data_1
-        # action[1] = np.sin(i / 50 * 2 * np.pi) / 10
-        # action[6] = np.cos(i / 50 * 2 * np.pi) / 10
-        # state_data_2
-        # action[2] = np.sin(i / 50 * 2 * np.pi) / 10
-        # action[7] = np.sin(i / 50 * 2 * np.pi) / 10
-        # state_data_3
-        action[1] = np.sin(i / 50 * 2 * np.pi) / 10
-        action[6] = np.cos(i / 50 * 2 * np.pi) / 10
-        action[2] = np.sin(i / 50 * 2 * np.pi) / 10
-        action[7] = np.sin(i / 50 * 2 * np.pi) / 10
-
-        state_data["states"].append(state.tolist())
-        state_data["actions"].append(action.tolist())
-        state_data["times"].append(time.perf_counter())
-
-        gnoci.memory.add_action(action)
-        gnoci.servo_controller.update_value_delta(action)
-
-        elapsed = time.perf_counter() - time_start
-        if elapsed < 1.0 / ctl_hz:
-            time.sleep(1.0 / ctl_hz - elapsed)
-
-    with open(file_name, 'w') as f:
-        json.dump(state_data, f, indent=4)
-
-
 def compute_major_change(state: np.ndarray):
     gx, gy, gz, ax, ay, az = state[24], state[25], state[26], state[27], state[28], state[29]
     gyro_vector = np.array([gx, gy, gz])
@@ -359,35 +229,21 @@ def compute_major_change(state: np.ndarray):
 
 
 @click.command()
-@click.option('--file-name', type=str, default='state_data.json')
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
 @click.option('--configure-sensors', type=bool, default=True)
-def orient(file_name: str, ctl_hz: int, configure_sensors: bool = True):
+def stream_sensor_data(ctl_hz: int, configure_sensors: bool = True):
     from gnoci.setup import setup_gnoci_control
+    from gnoci.net_util.channel import Channel
+    channel = Channel(host='127.0.0.1', port=8000)
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus, center_angles=True, control_hz=ctl_hz)
-    if configure_sensors:
-        total_drift, average_drift = gnoci.configure_sensors()
-        print(f"Total sensor drift: {total_drift:.3f}, Average sensor drift: {average_drift:.3f}")
-
-    action = np.zeros((10))
-    gnoci.servo_controller.update_value(action)
-    while True:
-        time_start = time.perf_counter()
-        state = gnoci.sensor_reader.data
-        compute_major_change(state)
-        elapsed = time.perf_counter() - time_start
-        if elapsed < 1.0 / ctl_hz:
-            time.sleep(1.0 / ctl_hz - elapsed)
-
-    # with open(file_name, 'w') as f:
-    #     json.dump(state_data, f, indent=4)
+    gnoci = setup_gnoci_control(bus=bus, center_angles=True, control_hz=ctl_hz, without_servos=True)
+    gnoci.configure_sensors_from_file('positioning_data.json')
+    channel.serve(lambda message: gnoci.sensor_reader.data)
 
 
 @click.command()
 @click.option('--overwrite', type=bool, default=False)
 def measure_imu_offsets(overwrite: bool = False):
-    from gnoci.setup import setup_gnoci_control
     from gnoci.hardware.hardware import init_mpu6050, read_sensor_data, decode_imu
     bus = SMBus(1)
     init_mpu6050(bus)
