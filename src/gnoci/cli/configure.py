@@ -231,7 +231,7 @@ def compute_major_change(state: np.ndarray):
 @click.command()
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
 @click.option('--configure-sensors', type=bool, default=True)
-def stream_sensor_data(ctl_hz: int, configure_sensors: bool = True):
+def stream_sensor_data(ctl_hz: int):
     from gnoci.setup import setup_gnoci_control
     from gnoci.net_util.channel import Channel
     channel = Channel(host='127.0.0.1', port=8000)

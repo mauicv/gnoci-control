@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import smbus2 as smbus
 from gnoci.hardware import SensorReader
 from gnoci.hardware import ServoController
@@ -30,6 +31,11 @@ class Gnoci:
             state_dim=OBSERVATION_DIM
         )
         time.sleep(0.01)
+
+    def get_policy_state(self):
+        # Appends each servo's slew-limited commanded target to the raw
+        # sensor state, mirroring gnoci-sim's _prev_target in _get_policy_obs.
+        return np.concatenate([self.sensor_reader.data, self.servo_controller.prev_targets])
 
     def configure_sensors(self):
         self.sensor_reader.center_angles = False

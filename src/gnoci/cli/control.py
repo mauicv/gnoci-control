@@ -40,16 +40,15 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
     def _tick():
         time_start = time.perf_counter()
 
-        state = gnoci.sensor_reader.data
+        state = gnoci.get_policy_state()
         gnoci.memory.add_state(state)
         observation = gnoci.memory.get_observation()
         action = gnoci.policy.predict(observation)
         gnoci.memory.add_action(action)
 
         action = low_pass_filter.update(action)
-        action = action * 0.7
         action = action * ACTION_SCALE
-        gnoci.servo_controller.update_value(action)
+        gnoci.servo_controller.update_target(action)
         actions.append(action.tolist())
         states.append(state.tolist())
 
