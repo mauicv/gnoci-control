@@ -64,6 +64,15 @@ class ServoController:
             self.servos[servo_idx].update_value(value)
         self.last_servo_set_ts = time.time()
 
+    def update_target(self, values: list[float]):
+        for servo_idx, value in zip(self.servo_map, values):
+            self.servos[servo_idx].update_target(value)
+        self.last_servo_set_ts = time.time()
+
+    @property
+    def prev_targets(self):
+        return [servo.prev_target for servo in self.iter_servos()]
+
     def _write_servos(self):
         servo_data = [servo.get_pwm() for servo in self.servos]
         write_servos(self.bus, servo_data, self.freq)

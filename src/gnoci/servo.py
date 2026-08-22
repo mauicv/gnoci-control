@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from gnoci.filters.low_pass import LowPassFilter
-from gnoci.config import CONTROL_HZ, MAX_DELTA_V
+from gnoci.config import CONTROL_HZ, MAX_DELTA_V, MAX_ACTUATOR_VELOCITY_UNITS, SERVO_UNIT_RAD
 
 SERVO_PWM_THRESHOLD_MIN: int = 500
 SERVO_PWM_THRESHOLD_MAX: int = 2500
@@ -17,6 +17,7 @@ class Servo:
     offset: float = 0.0
     control_hz: int = CONTROL_HZ
     max_delta_v: float = MAX_DELTA_V
+    max_actuator_velocity: float = MAX_ACTUATOR_VELOCITY_UNITS
     low_pass_filter_alpha: float = 0.4
     low_pass_filter: LowPassFilter = None
 
@@ -38,6 +39,27 @@ class Servo:
 
     def update_value(self, value: float):
         self._value = value
+
+    def update_target(self, value: float):
+        # Slew-rate limit the commanded target against the last stored
+        # setpoint, mirroring gnoci-sim's max_actuator_velocity clamp in
+        # step() (a physical servo can't jump instantly to a new position).
+        # Clamps against the raw unclipped setpoint, not pin_limits, so the
+        # joint-range clip in `value` stays a safety bound rather than
+        # feeding back into the rate limit (same as sim's ctrl clip vs.
+        # _prev_target).
+        max_step = self.max_actuator_velocity / self.control_hz
+        if value > self._value + max_step:
+            value = self._value + max_step
+        elif value < self._value - max_step:
+            value = self._value - max_step
+        self.update_value(value)
+
+    @property
+    def prev_target(self):
+        # Raw commanded setpoint converted to radians, matching gnoci-sim's
+        # (unnormalized) _prev_target observation units.
+        return self._value * SERVO_UNIT_RAD
 
     @property
     def value(self):
