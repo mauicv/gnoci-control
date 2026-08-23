@@ -29,14 +29,15 @@ MAX_JOINT_VEL = 6.0
 # moves the joint at MAX_JOINT_VEL rad/s, same as in sim.
 MAX_DELTA_V = MAX_JOINT_VEL / SERVO_UNIT_RAD
 
-ACTION_SCALE = (0.25 / SERVO_UNIT_RAD) * 0.0
+ACTION_SCALE = (0.25 / SERVO_UNIT_RAD)
 
 # Actuator slew-rate limit (rad/s) — must match gnoci-sim's
 # max_actuator_velocity default (the miuzei_25kg no-load speed rating,
 # ~0.16s/60deg ~= 6.5 rad/s). Applied to the commanded target every control
 # tick before it reaches the servo, mirroring the physical servo's inability
 # to jump instantly to a new position (see gnoci_gym/env.py step()).
-MAX_ACTUATOR_VELOCITY = 4.5
+# MAX_ACTUATOR_VELOCITY = 12.5 
+MAX_ACTUATOR_VELOCITY = 1.0
 
 # Per-second target slew-rate limit in servo units, same rad->unit
 # conversion as MAX_DELTA_V above.

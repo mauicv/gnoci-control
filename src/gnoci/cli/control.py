@@ -56,7 +56,7 @@ def start(host, port, ctl_hz: int, limit=None, configure_sensors: bool = True):
         if elapsed > 1.0 / ctl_hz:
             print(f"WARNING: tick overrun {elapsed*1000:.1f}ms")
 
-    time.sleep(10)
+    time.sleep(5)
     loop = Loop(hz=ctl_hz, func=_tick, limit=limit)
     loop.start()
     time.sleep(10)

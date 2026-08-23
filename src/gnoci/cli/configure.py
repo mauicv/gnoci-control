@@ -83,24 +83,18 @@ def test_imu(limit=10000):
     from gnoci.setup import setup_gnoci_control
 
     bus = SMBus(1)
-    gnoci = setup_gnoci_control(bus=bus)
+    gnoci = setup_gnoci_control(bus=bus, without_servos=True)
     servo_controller = gnoci.servo_controller
     sensor_reader = gnoci.sensor_reader
     policy = gnoci.policy
     perf_times = []
     time.sleep(0.01)
 
-    # sensor_reader.deinit()
-    servo_controller.deinit()
-
-    print("\n\n\n\n")
-    servo_controller.update_value([0]*10)
-
     for i in range(100000):
         data = sensor_reader.data
         pitch, roll = data[-2:]
         print(f"pitch: {pitch:5.3f}, roll: {roll:5.3f}")
-        time.sleep(0.1)
+        time.sleep(0.01)
 
 
 @click.command()
@@ -230,15 +224,14 @@ def compute_major_change(state: np.ndarray):
 
 @click.command()
 @click.option('--ctl-hz', type=int, default=CONTROL_HZ)
-@click.option('--configure-sensors', type=bool, default=True)
 def stream_sensor_data(ctl_hz: int):
     from gnoci.setup import setup_gnoci_control
     from gnoci.net_util.channel import Channel
     channel = Channel(host='127.0.0.1', port=8000)
     bus = SMBus(1)
     gnoci = setup_gnoci_control(bus=bus, center_angles=True, control_hz=ctl_hz, without_servos=True)
-    gnoci.configure_sensors_from_file('positioning_data.json')
-    channel.serve(lambda message: gnoci.sensor_reader.data)
+    # gnoci.configure_sensors_from_file('positioning_data.json')
+    channel.serve(lambda message: gnoci.sensor_reader.data.tolist())
 
 
 @click.command()

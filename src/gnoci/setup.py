@@ -83,6 +83,7 @@ class Gnoci:
 def setup_gnoci_control(
     bus: smbus.SMBus,
     center_angles: bool = True,
-    control_hz: int = CONTROL_HZ
+    control_hz: int = CONTROL_HZ,
+    without_servos: bool = False
 ):
-    return Gnoci(bus=bus, center_angles=center_angles, control_hz=control_hz)
+    return Gnoci(bus=bus, center_angles=center_angles, control_hz=control_hz, without_servos=without_servos)
