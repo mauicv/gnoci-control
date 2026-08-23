@@ -61,5 +61,13 @@ except ImportError as error:
     # raise error
 
 
+try:
+    from gnoci.cli.client import recieve_sensor_data
+    cli.add_command(recieve_sensor_data)
+except ImportError as error:
+    logger.error(error)
+    # raise error
+
+
 if __name__ == "__main__":
     cli()
